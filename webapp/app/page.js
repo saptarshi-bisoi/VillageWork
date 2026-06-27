@@ -432,6 +432,109 @@ export default function Home() {
         </div>
       </section>
 
+      {/* About Section */}
+      <section id="about" className="bg-[#0f1a0f] py-[64px] md:py-[96px] relative overflow-hidden">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
+          
+          <div className="flex flex-col md:flex-row items-center gap-[48px] md:gap-[80px]">
+            {/* Left Column — Visual Side */}
+            <div className="w-full md:w-[45%] relative">
+              
+              {/* Subtle radial green glow */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] h-[150%] bg-[radial-gradient(ellipse_at_center,rgba(34,197,94,0.06)_0%,transparent_70%)] z-0 pointer-events-none"></div>
+
+              {/* Main card */}
+              <div className="bg-[#1a2e1a] border border-[rgba(34,197,94,0.15)] rounded-[24px] p-[40px] relative z-10">
+                <div className="text-[#22c55e] text-[11px] tracking-[3px] uppercase mb-4">{t("OUR MISSION")}</div>
+                
+                <h3 className="font-serif italic text-[28px] text-white leading-[1.5]">
+                  &quot;{t("We believe every skilled hand deserves a digital identity.")}&quot;
+                </h3>
+                
+                <div className="w-[40px] h-[2px] bg-[#22c55e] my-[24px]"></div>
+                
+                <p className="font-sans text-[14px] text-[#9ca3af] leading-[1.8]">
+                  {t("Built by a team that grew up in villages and watched talent migrate to cities unnecessarily.")}
+                </p>
+              </div>
+
+              {/* 4 Floating Stat Cards */}
+              <div className="grid grid-cols-2 gap-[12px] mt-[12px] relative z-10">
+                <div className="bg-[#0f1a0f] border border-[rgba(34,197,94,0.2)] rounded-[14px] p-[16px_20px] text-center">
+                  <div className="font-serif font-bold text-[32px] text-[#22c55e]">500+</div>
+                  <div className="font-sans text-[12px] text-[#9ca3af] uppercase tracking-[1px] mt-1">{t("Villages Covered")}</div>
+                </div>
+                <div className="bg-[#0f1a0f] border border-[rgba(34,197,94,0.2)] rounded-[14px] p-[16px_20px] text-center">
+                  <div className="font-serif font-bold text-[32px] text-[#22c55e]">10K+</div>
+                  <div className="font-sans text-[12px] text-[#9ca3af] uppercase tracking-[1px] mt-1">{t("Workers Registered")}</div>
+                </div>
+                <div className="bg-[#0f1a0f] border border-[rgba(34,197,94,0.2)] rounded-[14px] p-[16px_20px] text-center">
+                  <div className="font-serif font-bold text-[32px] text-[#22c55e]">25K+</div>
+                  <div className="font-sans text-[12px] text-[#9ca3af] uppercase tracking-[1px] mt-1">{t("Jobs Completed")}</div>
+                </div>
+                <div className="bg-[#0f1a0f] border border-[rgba(34,197,94,0.2)] rounded-[14px] p-[16px_20px] text-center">
+                  <div className="font-serif font-bold text-[32px] text-[#22c55e]">4.8★</div>
+                  <div className="font-sans text-[12px] text-[#9ca3af] uppercase tracking-[1px] mt-1">{t("Average Rating")}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column — Text Content */}
+            <div className="w-full md:w-[55%] relative">
+              {/* Thin vertical green accent line */}
+              <div className="w-[3px] h-[60px] bg-[#22c55e] rounded-[2px] mb-[20px]"></div>
+
+              <div className="flex items-center gap-2 mb-[16px]">
+                <span className="text-[#22c55e] text-[12px] tracking-[3px] uppercase">{t("WHO WE ARE")}</span>
+              </div>
+
+              <h2 className="font-serif font-bold text-[36px] md:text-[48px] text-white leading-[1.2] mb-6">
+                {t("Built for Bharat's")}<br />{t("forgotten workforce")}
+              </h2>
+
+              <p className="font-sans text-[16px] text-[#9ca3af] leading-[1.8] mb-[20px]">
+                {t("VillageWork was born from a simple observation — India's most skilled workers live in its villages, but its biggest opportunities live in cities. We decided to change that.")}
+              </p>
+
+              <p className="font-sans text-[16px] text-[#9ca3af] leading-[1.8] mb-[32px]">
+                {t("We built a hyperlocal platform where an electrician in Bihar can find his first digital client, a tailor in UP can grow a loyal customer base, and a tutor in Bengal can teach without travelling miles — all in their own language, in their own village.")}
+              </p>
+
+              <div className="flex flex-col gap-[20px] mb-[36px]">
+                <div className="flex items-start gap-4">
+                  <div className="mt-1"><Check className="w-[20px] h-[20px] text-[#22c55e]" strokeWidth={3} /></div>
+                  <div>
+                    <div className="font-bold text-white mb-1">{t("No English required")}</div>
+                    <div className="text-[#9ca3af] text-[14px] leading-relaxed">{t("Full platform available in Hindi, Bengali, Tamil and more")}</div>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-4">
+                  <div className="mt-1"><Check className="w-[20px] h-[20px] text-[#22c55e]" strokeWidth={3} /></div>
+                  <div>
+                    <div className="font-bold text-white mb-1">{t("No app download needed")}</div>
+                    <div className="text-[#9ca3af] text-[14px] leading-relaxed">{t("Workers receive jobs directly on WhatsApp — zero friction")}</div>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4">
+                  <div className="mt-1"><Check className="w-[20px] h-[20px] text-[#22c55e]" strokeWidth={3} /></div>
+                  <div>
+                    <div className="font-bold text-white mb-1">{t("Government backed")}</div>
+                    <div className="text-[#9ca3af] text-[14px] leading-relaxed">{t("Integrated with Skill India and PM Vishwakarma schemes")}</div>
+                  </div>
+                </div>
+              </div>
+
+              <Link href="/about" className="inline-block bg-transparent border-[1.5px] border-[#22c55e] text-white px-[28px] py-[12px] rounded-[8px] font-bold hover:bg-[#22c55e] hover:text-[#0f1a0f] transition-colors mt-[16px]">
+                {t("Learn Our Story")} &rarr;
+              </Link>
+            </div>
+            
+          </div>
+        </div>
+      </section>
+
       {/* How It Works Section */}
       <section id="how-it-works" className="py-24 bg-dark">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
