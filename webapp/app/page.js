@@ -1,11 +1,17 @@
 "use client";
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useLanguage } from '@/context/LanguageContext';
-import { Wrench, FileText, ShieldCheck, ChevronUp, ClipboardList, BadgeCheck, Check, Scissors, Hammer, GraduationCap, Droplets, PaintBucket, Building, Leaf } from 'lucide-react';
+import { Wrench, FileText, ShieldCheck, ChevronUp, ChevronDown, ClipboardList, BadgeCheck, Check, Scissors, Hammer, GraduationCap, Droplets, PaintBucket, Building, Leaf } from 'lucide-react';
 
 export default function Home() {
   const { t } = useLanguage();
+  const [expandedStep, setExpandedStep] = useState(null);
+
+  const toggleStep = (step) => {
+    setExpandedStep(expandedStep === step ? null : step);
+  };
 
   return (
     <div>
@@ -230,7 +236,7 @@ export default function Home() {
               <div key={`row1-${i}`} className="flex items-center">
                 {/* Worker 1 */}
                 <div className="bg-[#1a2e1a] border border-primary/15 rounded-[16px] p-[16px_20px] w-[260px] md:w-[260px] w-[220px] shrink-0 mr-[16px] flex items-center gap-[14px]">
-                  <div className="w-[48px] h-[48px] rounded-full bg-[#22c55e] flex items-center justify-center text-white font-bold text-lg shrink-0">R</div>
+                  <div className="w-[48px] h-[48px] rounded-full bg-[#22c55e] flex items-center justify-center text-white font-bold text-lg shrink-0 overflow-hidden"><img src="/assets/images/worker-electrician.png" alt="Ramesh Kumar" className="w-full h-full object-cover" /></div>
                   <div className="flex-1">
                     <div className="flex items-center gap-1"><span className="text-white font-bold text-[14px]">Ramesh Kumar</span><Check className="w-[14px] h-[14px] text-primary" strokeWidth={3}/></div>
                     <div className="flex items-center gap-1 mt-0.5"><span className="bg-primary/20 text-primary px-2 py-0.5 rounded-full text-[11px] font-bold">Electrician</span><span className="text-[#9ca3af] text-[12px]">&middot; Patna Rural</span></div>
@@ -242,7 +248,7 @@ export default function Home() {
                 <div className="bg-primary/10 border border-primary/25 rounded-[50px] p-[10px_20px] shrink-0 mr-[16px] flex items-center gap-2 whitespace-nowrap"><Wrench className="w-[16px] h-[16px] text-primary"/><span className="text-white text-[13px] font-bold">Electrician</span></div>
                 {/* Worker 2 */}
                 <div className="bg-[#1a2e1a] border border-primary/15 rounded-[16px] p-[16px_20px] w-[260px] md:w-[260px] w-[220px] shrink-0 mr-[16px] flex items-center gap-[14px]">
-                  <div className="w-[48px] h-[48px] rounded-full bg-[#16a34a] flex items-center justify-center text-white font-bold text-lg shrink-0">P</div>
+                  <div className="w-[48px] h-[48px] rounded-full bg-[#16a34a] flex items-center justify-center text-white font-bold text-lg shrink-0 overflow-hidden"><img src="/assets/images/worker-tutor.png" alt="Priya Sharma" className="w-full h-full object-cover" /></div>
                   <div className="flex-1">
                     <div className="flex items-center gap-1"><span className="text-white font-bold text-[14px]">Priya Sharma</span><Check className="w-[14px] h-[14px] text-primary" strokeWidth={3}/></div>
                     <div className="flex items-center gap-1 mt-0.5"><span className="bg-primary/20 text-primary px-2 py-0.5 rounded-full text-[11px] font-bold">Tutor</span><span className="text-[#9ca3af] text-[12px]">&middot; Muzaffarpur</span></div>
@@ -266,7 +272,7 @@ export default function Home() {
                 <div className="bg-primary/10 border border-primary/25 rounded-[50px] p-[10px_20px] shrink-0 mr-[16px] flex items-center gap-2 whitespace-nowrap"><Hammer className="w-[16px] h-[16px] text-primary"/><span className="text-white text-[13px] font-bold">Carpenter</span></div>
                 {/* Worker 4 */}
                 <div className="bg-[#1a2e1a] border border-primary/15 rounded-[16px] p-[16px_20px] w-[260px] md:w-[260px] w-[220px] shrink-0 mr-[16px] flex items-center gap-[14px]">
-                  <div className="w-[48px] h-[48px] rounded-full bg-[#166534] flex items-center justify-center text-white font-bold text-lg shrink-0">A</div>
+                  <div className="w-[48px] h-[48px] rounded-full bg-[#166534] flex items-center justify-center text-white font-bold text-lg shrink-0 overflow-hidden"><img src="/assets/images/worker-painter.png" alt="Anita Kumari" className="w-full h-full object-cover" /></div>
                   <div className="flex-1">
                     <div className="flex items-center gap-1"><span className="text-white font-bold text-[14px]">Anita Kumari</span><Check className="w-[14px] h-[14px] text-primary" strokeWidth={3}/></div>
                     <div className="flex items-center gap-1 mt-0.5"><span className="bg-primary/20 text-primary px-2 py-0.5 rounded-full text-[11px] font-bold">Painter</span><span className="text-[#9ca3af] text-[12px]">&middot; Gaya</span></div>
@@ -278,7 +284,7 @@ export default function Home() {
                 <div className="bg-primary/10 border border-primary/25 rounded-[50px] p-[10px_20px] shrink-0 mr-[16px] flex items-center gap-2 whitespace-nowrap"><GraduationCap className="w-[16px] h-[16px] text-primary"/><span className="text-white text-[13px] font-bold">Tutor</span></div>
                 {/* Worker 5 */}
                 <div className="bg-[#1a2e1a] border border-primary/15 rounded-[16px] p-[16px_20px] w-[260px] md:w-[260px] w-[220px] shrink-0 mr-[16px] flex items-center gap-[14px]">
-                  <div className="w-[48px] h-[48px] rounded-full bg-[#14532d] flex items-center justify-center text-white font-bold text-lg shrink-0">S</div>
+                  <div className="w-[48px] h-[48px] rounded-full bg-[#14532d] flex items-center justify-center text-white font-bold text-lg shrink-0 overflow-hidden"><img src="/assets/images/worker-electrician.png" alt="Suresh Bind" className="w-full h-full object-cover" /></div>
                   <div className="flex-1">
                     <div className="flex items-center gap-1"><span className="text-white font-bold text-[14px]">Suresh Bind</span><Check className="w-[14px] h-[14px] text-primary" strokeWidth={3}/></div>
                     <div className="flex items-center gap-1 mt-0.5"><span className="bg-primary/20 text-primary px-2 py-0.5 rounded-full text-[11px] font-bold">Electrician</span><span className="text-[#9ca3af] text-[12px]">&middot; Nalanda</span></div>
@@ -296,7 +302,7 @@ export default function Home() {
               <div key={`row2-${i}`} className="flex items-center">
                 {/* Worker 1 */}
                 <div className="bg-[#1a2e1a] border border-primary/15 rounded-[16px] p-[16px_20px] w-[260px] md:w-[260px] w-[220px] shrink-0 mr-[16px] flex items-center gap-[14px]">
-                  <div className="w-[48px] h-[48px] rounded-full bg-[#22c55e] flex items-center justify-center text-white font-bold text-lg shrink-0">S</div>
+                  <div className="w-[48px] h-[48px] rounded-full bg-[#22c55e] flex items-center justify-center text-white font-bold text-lg shrink-0 overflow-hidden"><img src="/assets/images/worker-tailor.png" alt="Sunita Devi" className="w-full h-full object-cover" /></div>
                   <div className="flex-1">
                     <div className="flex items-center gap-1"><span className="text-white font-bold text-[14px]">Sunita Devi</span><Check className="w-[14px] h-[14px] text-primary" strokeWidth={3}/></div>
                     <div className="flex items-center gap-1 mt-0.5"><span className="bg-primary/20 text-primary px-2 py-0.5 rounded-full text-[11px] font-bold">Tailor</span><span className="text-[#9ca3af] text-[12px]">&middot; Ara</span></div>
@@ -308,7 +314,7 @@ export default function Home() {
                 <div className="bg-primary/10 border border-primary/25 rounded-[50px] p-[10px_20px] shrink-0 mr-[16px] flex items-center gap-2 whitespace-nowrap"><Droplets className="w-[16px] h-[16px] text-primary"/><span className="text-white text-[13px] font-bold">Plumber</span></div>
                 {/* Worker 2 */}
                 <div className="bg-[#1a2e1a] border border-primary/15 rounded-[16px] p-[16px_20px] w-[260px] md:w-[260px] w-[220px] shrink-0 mr-[16px] flex items-center gap-[14px]">
-                  <div className="w-[48px] h-[48px] rounded-full bg-[#16a34a] flex items-center justify-center text-white font-bold text-lg shrink-0">M</div>
+                  <div className="w-[48px] h-[48px] rounded-full bg-[#16a34a] flex items-center justify-center text-white font-bold text-lg shrink-0 overflow-hidden"><img src="/assets/images/worker-plumber.png" alt="Mohan Singh" className="w-full h-full object-cover" /></div>
                   <div className="flex-1">
                     <div className="flex items-center gap-1"><span className="text-white font-bold text-[14px]">Mohan Singh</span><Check className="w-[14px] h-[14px] text-primary" strokeWidth={3}/></div>
                     <div className="flex items-center gap-1 mt-0.5"><span className="bg-primary/20 text-primary px-2 py-0.5 rounded-full text-[11px] font-bold">Plumber</span><span className="text-[#9ca3af] text-[12px]">&middot; Chapra</span></div>
@@ -320,7 +326,7 @@ export default function Home() {
                 <div className="bg-primary/10 border border-primary/25 rounded-[50px] p-[10px_20px] shrink-0 mr-[16px] flex items-center gap-2 whitespace-nowrap"><Building className="w-[16px] h-[16px] text-primary"/><span className="text-white text-[13px] font-bold">Mason</span></div>
                 {/* Worker 3 */}
                 <div className="bg-[#1a2e1a] border border-primary/15 rounded-[16px] p-[16px_20px] w-[260px] md:w-[260px] w-[220px] shrink-0 mr-[16px] flex items-center gap-[14px]">
-                  <div className="w-[48px] h-[48px] rounded-full bg-[#15803d] flex items-center justify-center text-white font-bold text-lg shrink-0">R</div>
+                  <div className="w-[48px] h-[48px] rounded-full bg-[#15803d] flex items-center justify-center text-white font-bold text-lg shrink-0 overflow-hidden"><img src="/assets/images/worker-carpenter.png" alt="Raju Mistri" className="w-full h-full object-cover" /></div>
                   <div className="flex-1">
                     <div className="flex items-center gap-1"><span className="text-white font-bold text-[14px]">Raju Mistri</span><Check className="w-[14px] h-[14px] text-primary" strokeWidth={3}/></div>
                     <div className="flex items-center gap-1 mt-0.5"><span className="bg-primary/20 text-primary px-2 py-0.5 rounded-full text-[11px] font-bold">Carpenter</span><span className="text-[#9ca3af] text-[12px]">&middot; Bhagalpur</span></div>
@@ -332,7 +338,7 @@ export default function Home() {
                 <div className="bg-primary/10 border border-primary/25 rounded-[50px] p-[10px_20px] shrink-0 mr-[16px] flex items-center gap-2 whitespace-nowrap"><PaintBucket className="w-[16px] h-[16px] text-primary"/><span className="text-white text-[13px] font-bold">Painter</span></div>
                 {/* Worker 4 */}
                 <div className="bg-[#1a2e1a] border border-primary/15 rounded-[16px] p-[16px_20px] w-[260px] md:w-[260px] w-[220px] shrink-0 mr-[16px] flex items-center gap-[14px]">
-                  <div className="w-[48px] h-[48px] rounded-full bg-[#166534] flex items-center justify-center text-white font-bold text-lg shrink-0">M</div>
+                  <div className="w-[48px] h-[48px] rounded-full bg-[#166534] flex items-center justify-center text-white font-bold text-lg shrink-0 overflow-hidden"><img src="/assets/images/worker-tailor.png" alt="Meena Devi" className="w-full h-full object-cover" /></div>
                   <div className="flex-1">
                     <div className="flex items-center gap-1"><span className="text-white font-bold text-[14px]">Meena Devi</span><Check className="w-[14px] h-[14px] text-primary" strokeWidth={3}/></div>
                     <div className="flex items-center gap-1 mt-0.5"><span className="bg-primary/20 text-primary px-2 py-0.5 rounded-full text-[11px] font-bold">Tailor</span><span className="text-[#9ca3af] text-[12px]">&middot; Sitamarhi</span></div>
@@ -344,7 +350,7 @@ export default function Home() {
                 <div className="bg-primary/10 border border-primary/25 rounded-[50px] p-[10px_20px] shrink-0 mr-[16px] flex items-center gap-2 whitespace-nowrap"><Leaf className="w-[16px] h-[16px] text-primary"/><span className="text-white text-[13px] font-bold">Gardener</span></div>
                 {/* Worker 5 */}
                 <div className="bg-[#1a2e1a] border border-primary/15 rounded-[16px] p-[16px_20px] w-[260px] md:w-[260px] w-[220px] shrink-0 mr-[16px] flex items-center gap-[14px]">
-                  <div className="w-[48px] h-[48px] rounded-full bg-[#14532d] flex items-center justify-center text-white font-bold text-lg shrink-0">D</div>
+                  <div className="w-[48px] h-[48px] rounded-full bg-[#14532d] flex items-center justify-center text-white font-bold text-lg shrink-0 overflow-hidden"><img src="/assets/images/worker-plumber.png" alt="Deepak Kumar" className="w-full h-full object-cover" /></div>
                   <div className="flex-1">
                     <div className="flex items-center gap-1"><span className="text-white font-bold text-[14px]">Deepak Kumar</span><Check className="w-[14px] h-[14px] text-primary" strokeWidth={3}/></div>
                     <div className="flex items-center gap-1 mt-0.5"><span className="bg-primary/20 text-primary px-2 py-0.5 rounded-full text-[11px] font-bold">Plumber</span><span className="text-[#9ca3af] text-[12px]">&middot; Vaishali</span></div>
@@ -436,39 +442,66 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
             {/* Card 1 */}
-            <div className="bg-card rounded-[20px] p-[40px_32px] border border-[rgba(255,255,255,0.08)] hover:border-[rgba(34,197,94,0.3)] hover:shadow-[0_0_30px_rgba(34,197,94,0.1)] transition-all duration-200 flex flex-col">
+            <div 
+              className="bg-card rounded-[20px] p-[40px_32px] border border-[rgba(255,255,255,0.08)] hover:border-[rgba(34,197,94,0.3)] hover:shadow-[0_0_30px_rgba(34,197,94,0.1)] transition-all duration-200 flex flex-col cursor-pointer"
+              onClick={() => toggleStep(1)}
+            >
               <div className="font-serif font-bold text-[80px] text-white/90 leading-none mb-6">1</div>
               <div className="flex items-center gap-2 mb-4">
                 <h3 className="text-white font-bold text-[24px]">Post a Job</h3>
-                <ChevronUp className="w-[20px] h-[20px] text-primary" strokeWidth={2} />
+                {expandedStep === 1 ? (
+                  <ChevronUp className="w-[20px] h-[20px] text-primary" strokeWidth={2} />
+                ) : (
+                  <ChevronDown className="w-[20px] h-[20px] text-primary" strokeWidth={2} />
+                )}
               </div>
-              <p className="text-[#9ca3af] text-[14px] font-sans leading-[1.8]">
-                Tell us the skill you need and when. Add your village name, budget, and preferred date. Done in under 2 minutes — no English required.
-              </p>
+              {expandedStep === 1 && (
+                <p className="text-[#9ca3af] text-[14px] font-sans leading-[1.8] animate-in fade-in slide-in-from-top-2 duration-300">
+                  Tell us the skill you need and when. Add your village name, budget, and preferred date. Done in under 2 minutes — no English required.
+                </p>
+              )}
             </div>
 
             {/* Card 2 */}
-            <div className="bg-card rounded-[20px] p-[40px_32px] border border-[rgba(255,255,255,0.08)] hover:border-[rgba(34,197,94,0.3)] hover:shadow-[0_0_30px_rgba(34,197,94,0.1)] transition-all duration-200 flex flex-col">
+            <div 
+              className="bg-card rounded-[20px] p-[40px_32px] border border-[rgba(255,255,255,0.08)] hover:border-[rgba(34,197,94,0.3)] hover:shadow-[0_0_30px_rgba(34,197,94,0.1)] transition-all duration-200 flex flex-col cursor-pointer"
+              onClick={() => toggleStep(2)}
+            >
               <div className="font-serif font-bold text-[80px] text-white/90 leading-none mb-6">2</div>
               <div className="flex items-center gap-2 mb-4">
                 <h3 className="text-white font-bold text-[24px]">Get AI-Matched</h3>
-                <ChevronUp className="w-[20px] h-[20px] text-primary" strokeWidth={2} />
+                {expandedStep === 2 ? (
+                  <ChevronUp className="w-[20px] h-[20px] text-primary" strokeWidth={2} />
+                ) : (
+                  <ChevronDown className="w-[20px] h-[20px] text-primary" strokeWidth={2} />
+                )}
               </div>
-              <p className="text-[#9ca3af] text-[14px] font-sans leading-[1.8]">
-                Our engine matches you with the top 3 workers by skill, proximity, rating, and availability — instantly. View their profiles before you decide.
-              </p>
+              {expandedStep === 2 && (
+                <p className="text-[#9ca3af] text-[14px] font-sans leading-[1.8] animate-in fade-in slide-in-from-top-2 duration-300">
+                  Our engine matches you with the top 3 workers by skill, proximity, rating, and availability — instantly. View their profiles before you decide.
+                </p>
+              )}
             </div>
 
             {/* Card 3 */}
-            <div className="bg-card rounded-[20px] p-[40px_32px] border border-[rgba(255,255,255,0.08)] hover:border-[rgba(34,197,94,0.3)] hover:shadow-[0_0_30px_rgba(34,197,94,0.1)] transition-all duration-200 flex flex-col">
+            <div 
+              className="bg-card rounded-[20px] p-[40px_32px] border border-[rgba(255,255,255,0.08)] hover:border-[rgba(34,197,94,0.3)] hover:shadow-[0_0_30px_rgba(34,197,94,0.1)] transition-all duration-200 flex flex-col cursor-pointer"
+              onClick={() => toggleStep(3)}
+            >
               <div className="font-serif font-bold text-[80px] text-white/90 leading-none mb-6">3</div>
               <div className="flex items-center gap-2 mb-4">
                 <h3 className="text-white font-bold text-[24px]">Accept via WhatsApp</h3>
-                <ChevronUp className="w-[20px] h-[20px] text-primary" strokeWidth={2} />
+                {expandedStep === 3 ? (
+                  <ChevronUp className="w-[20px] h-[20px] text-primary" strokeWidth={2} />
+                ) : (
+                  <ChevronDown className="w-[20px] h-[20px] text-primary" strokeWidth={2} />
+                )}
               </div>
-              <p className="text-[#9ca3af] text-[14px] font-sans leading-[1.8]">
-                Workers get a WhatsApp alert with job details. One tap to accept. Complete the work, earn your pay, and grow your village reputation.
-              </p>
+              {expandedStep === 3 && (
+                <p className="text-[#9ca3af] text-[14px] font-sans leading-[1.8] animate-in fade-in slide-in-from-top-2 duration-300">
+                  Workers get a WhatsApp alert with job details. One tap to accept. Complete the work, earn your pay, and grow your village reputation.
+                </p>
+              )}
             </div>
 
           </div>
