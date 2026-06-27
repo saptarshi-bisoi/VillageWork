@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #0f1a0f;
+  --foreground: #ffffff;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  overflow-x: hidden;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+@keyframes scrollLeft {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes scrollRight {
+  0% { transform: translateX(-50%); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes pulse-green {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.4); }
+}
+
+.animate-marquee-left {
+  animation: scrollLeft 30s linear infinite;
+}
+
+.animate-marquee-right {
+  animation: scrollRight 30s linear infinite;
+}
+
+.animate-pulse-green {
+  animation: pulse-green 2s ease infinite;
+}
+
+.marquee-container:hover .animate-marquee-left,
+.marquee-container:hover .animate-marquee-right {
+  animation-play-state: paused;
+}
+
+.marquee-mask::before,
+.marquee-mask::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 120px;
+  z-index: 2;
+  pointer-events: none;
+}
+.marquee-mask::before {
+  left: 0;
+  background: linear-gradient(to right, #0a1a0a, transparent);
+}
+.marquee-mask::after {
+  right: 0;
+  background: linear-gradient(to left, #0a1a0a, transparent);
+}
+@media (max-width: 767px) {
+  .marquee-mask::before,
+  .marquee-mask::after {
+    width: 60px;
+  }
+  .animate-marquee-left,
+  .animate-marquee-right {
+    animation-duration: 20s;
+  }
+}
