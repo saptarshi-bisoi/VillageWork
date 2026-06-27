@@ -24,7 +24,7 @@ export default function Navbar() {
           <div className="hidden md:flex items-center space-x-8">
             <Link href="/" className="text-gray-300 hover:text-white transition-colors">{t("Home")}</Link>
             <Link href="/about" className="text-gray-300 hover:text-white transition-colors">{t("About")}</Link>
-            <Link href="/how-it-works" className="text-gray-300 hover:text-white transition-colors">{t("How It Works")}</Link>
+            <Link href="/#how-it-works" className="text-gray-300 hover:text-white transition-colors">{t("How It Works")}</Link>
             <Link href="/contact" className="text-gray-300 hover:text-white transition-colors">{t("Contact")}</Link>
             
             <button 
@@ -60,7 +60,7 @@ export default function Navbar() {
           <div className="flex flex-col space-y-4">
             <Link href="/" onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-white transition-colors">{t("Home")}</Link>
             <Link href="/about" onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-white transition-colors">{t("About")}</Link>
-            <Link href="/how-it-works" onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-white transition-colors">{t("How It Works")}</Link>
+            <Link href="/#how-it-works" onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-white transition-colors">{t("How It Works")}</Link>
             <Link href="/contact" onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-white transition-colors">{t("Contact")}</Link>
             <Link href="/sign-in" onClick={() => setIsOpen(false)} className="bg-primary text-center text-white px-6 py-2 rounded-full font-bold hover:bg-green-600 transition-colors">
               {t("Sign In")}
