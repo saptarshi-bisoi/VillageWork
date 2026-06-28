@@ -1,28 +1,336 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import Link from 'next/link';
 import { useLanguage } from '@/context/LanguageContext';
 import { Wrench, FileText, ShieldCheck, ChevronUp, ChevronDown, ClipboardList, BadgeCheck, Check, Scissors, Hammer, GraduationCap, Droplets, PaintBucket, Building, Leaf } from 'lucide-react';
+import { motion } from 'framer-motion';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { useIsMobile } from '@/hooks/useIsMobile';
+
+gsap.registerPlugin(ScrollTrigger);
+
+// Lazy-load Lottie for performance
+const Lottie = lazy(() => import('lottie-react'));
+
+// Lazy-load Lottie JSON data
+const wrenchData = () => import('@/components/animations/lottie/wrench.json').then(m => m.default);
+const clipboardData = () => import('@/components/animations/lottie/clipboard.json').then(m => m.default);
+const badgeData = () => import('@/components/animations/lottie/badge.json').then(m => m.default);
+const checkmarkData = () => import('@/components/animations/lottie/checkmark.json').then(m => m.default);
+
+// ===== Lottie Icon Component (lazy-loaded) =====
+function LottieIcon({ loadData, fallbackIcon: FallbackIcon, size = 40, className = "" }) {
+  const lottieRef = useRef(null);
+  const [animData, setAnimData] = useState(null);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    loadData().then(data => {
+      setAnimData(data);
+      setLoaded(true);
+    });
+  }, [loadData]);
+
+  if (!loaded || !animData) {
+    return <FallbackIcon className={`w-[${size}px] h-[${size}px] text-white`} strokeWidth={1.5} />;
+  }
+
+  return (
+    <Suspense fallback={<FallbackIcon className={`w-[${size}px] h-[${size}px] text-white`} strokeWidth={1.5} />}>
+      <div
+        className={className}
+        onMouseEnter={() => {
+          if (lottieRef.current) {
+            lottieRef.current.goToAndPlay(0);
+          }
+        }}
+        style={{ width: size, height: size }}
+      >
+        <Lottie
+          lottieRef={lottieRef}
+          animationData={animData}
+          loop={false}
+          autoplay={false}
+          style={{ width: size, height: size }}
+        />
+      </div>
+    </Suspense>
+  );
+}
+
+// ===== Duration helper for mobile =====
+function dur(base, isMobile) {
+  return isMobile ? base * 0.7 : base;
+}
 
 export default function Home() {
   const { t } = useLanguage();
   const [expandedStep, setExpandedStep] = useState(null);
+  const prefersReduced = useReducedMotion();
+  const isMobile = useIsMobile();
+
+  // Refs for GSAP animations
+  const heroTitleRef = useRef(null);
+  const heroLine1Ref = useRef(null);
+  const heroLine2Ref = useRef(null);
+  const statsRowRef = useRef(null);
+  const stat1Ref = useRef(null);
+  const stat2Ref = useRef(null);
+  const stat3Ref = useRef(null);
+  const leafLeftRef = useRef(null);
+  const leafRightRef = useRef(null);
+  const featuresHeadlineRef = useRef(null);
+  const featuresSectionRef = useRef(null);
+  const aboutRightRef = useRef(null);
+  const accentLineRef = useRef(null);
+  const aboutSectionRef = useRef(null);
+  const aboutStatRefs = useRef([]);
+  const featureIconRefs = useRef([]);
 
   const toggleStep = (step) => {
     setExpandedStep(expandedStep === step ? null : step);
   };
 
+  // ===== GSAP Animations =====
+  useEffect(() => {
+    if (prefersReduced) return;
+
+    const iconElements = [...featureIconRefs.current];
+    const ctx = gsap.context(() => {
+      // --- Hero Title Reveal ---
+      const titleLines = [heroLine1Ref.current, heroLine2Ref.current].filter(Boolean);
+      gsap.from(titleLines, {
+        y: 100,
+        opacity: 0,
+        duration: dur(1.2, isMobile),
+        ease: "power4.out",
+        stagger: 0.15,
+      });
+
+      // --- Trust Stats Counter (ScrollTrigger) ---
+      if (statsRowRef.current) {
+        const counterTargets = [
+          { ref: stat1Ref.current, end: 10000 },
+          { ref: stat2Ref.current, end: 500 },
+          { ref: stat3Ref.current, end: 4.8, decimals: true },
+        ];
+        counterTargets.forEach(({ ref, end, decimals }) => {
+          if (!ref) return;
+          const obj = { val: 0 };
+          gsap.to(obj, {
+            val: end,
+            duration: dur(2, isMobile),
+            ease: "power2.out",
+            scrollTrigger: {
+              trigger: statsRowRef.current,
+              start: "top 85%",
+              once: true,
+            },
+            onUpdate: () => {
+              if (decimals) {
+                ref.textContent = obj.val.toFixed(1) + "★";
+              } else {
+                ref.textContent = Math.round(obj.val).toLocaleString() + "+";
+              }
+            },
+          });
+        });
+      }
+
+      // --- Botanical Leaves Parallax (desktop only) ---
+      if (!isMobile) {
+        if (leafLeftRef.current) {
+          gsap.to(leafLeftRef.current, {
+            y: -60,
+            scrollTrigger: {
+              trigger: ".hero-section",
+              start: "top top",
+              end: "bottom top",
+              scrub: 1.5,
+            },
+          });
+        }
+        if (leafRightRef.current) {
+          gsap.to(leafRightRef.current, {
+            y: -40,
+            scrollTrigger: {
+              trigger: ".hero-section",
+              start: "top top",
+              end: "bottom top",
+              scrub: 2,
+            },
+          });
+        }
+      }
+
+      // --- Features Headline Reveal ---
+      if (featuresHeadlineRef.current) {
+        gsap.from(featuresHeadlineRef.current, {
+          opacity: 0,
+          y: 60,
+          duration: dur(1, isMobile),
+          scrollTrigger: {
+            trigger: featuresSectionRef.current,
+            start: "top 80%",
+          },
+        });
+      }
+
+      // --- About Section: Right Column Text Reveal ---
+      if (aboutRightRef.current) {
+        const lines = aboutRightRef.current.querySelectorAll('.about-line');
+        if (lines.length) {
+          gsap.from(lines, {
+            opacity: 0,
+            y: 30,
+            stagger: 0.15,
+            duration: dur(0.8, isMobile),
+            scrollTrigger: {
+              trigger: aboutRightRef.current,
+              start: "top 75%",
+            },
+          });
+        }
+      }
+
+      // --- About Section: Green Accent Line Grow ---
+      if (accentLineRef.current) {
+        gsap.from(accentLineRef.current, {
+          scaleY: 0,
+          transformOrigin: "top center",
+          duration: dur(0.8, isMobile),
+          ease: "power3.out",
+          scrollTrigger: {
+            trigger: aboutSectionRef.current,
+            start: "top 80%",
+          },
+        });
+      }
+
+      // --- About Section: Stat Counters ---
+      const aboutCounters = [
+        { ref: aboutStatRefs.current[0], end: 500, suffix: "+" },
+        { ref: aboutStatRefs.current[1], end: 10, suffix: "K+", multiplier: 1 },
+        { ref: aboutStatRefs.current[2], end: 25, suffix: "K+", multiplier: 1 },
+        { ref: aboutStatRefs.current[3], end: 4.8, suffix: "★", decimals: true },
+      ];
+      aboutCounters.forEach(({ ref, end, suffix, decimals }) => {
+        if (!ref) return;
+        const obj = { val: 0 };
+        gsap.to(obj, {
+          val: end,
+          duration: dur(2, isMobile),
+          ease: "power2.out",
+          scrollTrigger: {
+            trigger: ref,
+            start: "top 85%",
+            once: true,
+          },
+          onUpdate: () => {
+            if (decimals) {
+              ref.textContent = obj.val.toFixed(1) + suffix;
+            } else {
+              ref.textContent = Math.round(obj.val) + suffix;
+            }
+          },
+        });
+      });
+
+
+
+      // --- Feature Icon Hover (GSAP) ---
+      iconElements.forEach((iconEl) => {
+        if (!iconEl) return;
+        const enterHandler = () => {
+          gsap.to(iconEl, { rotate: 15, scale: 1.2, duration: 0.3, ease: "back.out(2)" });
+        };
+        const leaveHandler = () => {
+          gsap.to(iconEl, { rotate: 0, scale: 1, duration: 0.3 });
+        };
+        iconEl.addEventListener('mouseenter', enterHandler);
+        iconEl.addEventListener('mouseleave', leaveHandler);
+        iconEl._gsapEnter = enterHandler;
+        iconEl._gsapLeave = leaveHandler;
+      });
+    });
+
+    return () => {
+      // Cleanup GSAP
+      ctx.revert();
+      // Cleanup icon listeners
+      iconElements.forEach((iconEl) => {
+        if (iconEl && iconEl._gsapEnter) {
+          iconEl.removeEventListener('mouseenter', iconEl._gsapEnter);
+          iconEl.removeEventListener('mouseleave', iconEl._gsapLeave);
+        }
+      });
+    };
+  }, [prefersReduced, isMobile]);
+
+  // Shared Framer Motion variants
+  const fadeUp = (delay = 0) => ({
+    initial: prefersReduced ? {} : { opacity: 0, y: 30 },
+    animate: prefersReduced ? {} : { opacity: 1, y: 0 },
+    transition: { duration: dur(0.8, isMobile), delay, ease: "easeOut" },
+  });
+
+  const whileInViewFadeUp = (delay = 0) => ({
+    initial: prefersReduced ? {} : { opacity: 0, y: 60 },
+    whileInView: prefersReduced ? {} : { opacity: 1, y: 0 },
+    viewport: { once: true },
+    transition: { duration: dur(0.7, isMobile), delay, ease: [0.25, 0.46, 0.45, 0.94] },
+  });
+
+  const whileInViewScaleBounce = (delay = 0) => ({
+    initial: prefersReduced ? {} : { opacity: 0, scale: 0 },
+    whileInView: prefersReduced ? {} : { opacity: 1, scale: 1 },
+    viewport: { once: true },
+    transition: { duration: dur(0.8, isMobile), delay, type: "spring", bounce: 0.5 },
+  });
+
+  const buttonHover = prefersReduced ? {} : {
+    whileHover: { scale: 1.05, y: -2 },
+    whileTap: { scale: 0.97 },
+    transition: { type: "spring", stiffness: 400 },
+  };
+
+  const cardHover = prefersReduced ? {} : {
+    whileHover: {
+      y: -12,
+      scale: 1.02,
+      boxShadow: "0 24px 60px rgba(34,197,94,0.15)",
+    },
+    transition: { type: "spring", stiffness: 300 },
+  };
+
   return (
     <div>
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center pt-20 pb-20 overflow-hidden bg-dark">
+      <section className="hero-section relative min-h-screen flex items-center pt-20 pb-20 overflow-hidden bg-dark">
+        {/* Background Radial Glow Pulse */}
+        {!prefersReduced && (
+          <motion.div
+            className="absolute inset-0 pointer-events-none z-0"
+            style={{
+              background: "radial-gradient(ellipse at 30% 50%, rgba(34,197,94,0.08) 0%, transparent 70%)",
+            }}
+            animate={!isMobile ? {
+              scale: [1, 1.2, 1],
+              opacity: [0.06, 0.12, 0.06],
+            } : {}}
+            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+          />
+        )}
+
         {/* Botanical Leaves with Vignette */}
-        <div className="absolute left-0 top-0 bottom-0 w-64 pointer-events-none z-0">
+        <div ref={leafLeftRef} className="absolute left-0 top-0 bottom-0 w-64 pointer-events-none z-0">
           <img src="/assets/images/leaves-left.png" alt="" className="h-full w-full object-cover opacity-60" />
           <div className="absolute inset-0 bg-gradient-to-r from-dark/0 to-dark"></div>
         </div>
-        <div className="absolute right-0 top-0 bottom-0 w-64 pointer-events-none z-0">
+        <div ref={leafRightRef} className="absolute right-0 top-0 bottom-0 w-64 pointer-events-none z-0">
           <img src="/assets/images/leaves-right.png" alt="" className="h-full w-full object-cover opacity-60" />
           <div className="absolute inset-0 bg-gradient-to-l from-dark/0 to-dark"></div>
         </div>
@@ -32,138 +340,192 @@ export default function Home() {
             
             {/* Left Column - 55% */}
             <div className="w-full lg:w-[55%] flex flex-col items-start text-left">
-              <div className="text-primary text-[12px] font-bold tracking-[3px] uppercase mb-6">
+              {/* Label */}
+              <motion.div
+                className="text-primary text-[12px] font-bold tracking-[3px] uppercase mb-6"
+                {...(prefersReduced ? {} : {
+                  initial: { opacity: 0, y: -20 },
+                  animate: { opacity: 1, y: 0 },
+                  transition: { duration: dur(0.6, isMobile), delay: 0.2 },
+                })}
+              >
                 {t("INDIA'S #1 RURAL GIG PLATFORM")}
-              </div>
+              </motion.div>
               
-              <h1 className="font-serif text-5xl md:text-[68px] text-white leading-[1.1] mb-6">
-                <span className="font-normal block">{t("Find skilled workers")}</span>
-                <span className="text-primary italic block">{t("in your village")}</span>
+              {/* Headline */}
+              <h1 ref={heroTitleRef} className="font-serif text-5xl md:text-[68px] text-white leading-[1.1] mb-6">
+                <span ref={heroLine1Ref} className="font-normal block">{t("Find skilled workers")}</span>
+                <span ref={heroLine2Ref} className="text-primary italic block">{t("in your village")}</span>
               </h1>
               
-              <p className="text-[#9ca3af] text-[18px] mb-10 max-w-lg font-sans leading-relaxed">
+              {/* Subheading */}
+              <motion.p
+                className="text-[#9ca3af] text-[18px] mb-10 max-w-lg font-sans leading-relaxed"
+                {...(prefersReduced ? {} : {
+                  initial: { opacity: 0, y: 30 },
+                  animate: { opacity: 1, y: 0 },
+                  transition: { duration: dur(0.8, isMobile), delay: 0.6 },
+                })}
+              >
                 {t("VillageWork connects skilled rural workers with nearby households and businesses — in their language, at their pace, on WhatsApp.")}
-              </p>
+              </motion.p>
               
-              <div className="flex flex-col sm:flex-row gap-4 mb-8">
-                <Link href="/search" className="bg-primary text-white font-bold px-[28px] py-[14px] rounded-[8px] uppercase tracking-[1px] text-center hover:bg-green-600 transition-colors duration-200">
-                  {t("I Need a Worker")}
-                </Link>
-                <Link href="/post-job" className="bg-transparent border-2 border-primary text-white font-bold px-[28px] py-[14px] rounded-[8px] uppercase tracking-[1px] text-center hover:bg-primary/10 transition-colors duration-200">
-                  {t("I Want Work")}
-                </Link>
-              </div>
+              {/* Buttons */}
+              <motion.div
+                className="flex flex-col sm:flex-row gap-4 mb-8"
+                {...(prefersReduced ? {} : {
+                  initial: { opacity: 0, scale: 0.9 },
+                  animate: { opacity: 1, scale: 1 },
+                  transition: { duration: dur(0.5, isMobile), delay: 0.9 },
+                })}
+              >
+                <motion.div {...buttonHover}>
+                  <Link href="/search" className="bg-primary text-white font-bold px-[28px] py-[14px] rounded-[8px] uppercase tracking-[1px] text-center hover:bg-green-600 transition-colors duration-200 inline-block">
+                    {t("I Need a Worker")}
+                  </Link>
+                </motion.div>
+                <motion.div {...buttonHover}>
+                  <Link href="/post-job" className="bg-transparent border-2 border-primary text-white font-bold px-[28px] py-[14px] rounded-[8px] uppercase tracking-[1px] text-center hover:bg-primary/10 transition-colors duration-200 inline-block">
+                    {t("I Want Work")}
+                  </Link>
+                </motion.div>
+              </motion.div>
 
-              <div className="flex items-center gap-2 text-[13px] text-[#9ca3af]">
-                <span>{t("10,000+ Workers")}</span>
+              {/* Trust Stats */}
+              <div ref={statsRowRef} className="flex items-center gap-2 text-[13px] text-[#9ca3af]">
+                <span><span ref={stat1Ref}>10,000+</span> {t("Workers")}</span>
                 <span className="text-primary font-bold">&middot;</span>
-                <span>{t("500+ Villages")}</span>
+                <span><span ref={stat2Ref}>500+</span> {t("Villages")}</span>
                 <span className="text-primary font-bold">&middot;</span>
-                <span>{t("4.8★ Rating")}</span>
+                <span><span ref={stat3Ref}>4.8★</span> {t("Rating")}</span>
               </div>
             </div>
 
             {/* Right Column - 45% */}
             <div className="w-full lg:w-[45%] relative mt-12 lg:mt-0 flex justify-center lg:justify-end">
-              <div className="relative w-full max-w-[500px] z-10 hidden md:block">
-                
-                {/* Main CSS Card */}
-                <div className="bg-[#1a2e1a] rounded-[24px] border border-[rgba(34,197,94,0.2)] shadow-[0_24px_60px_rgba(0,0,0,0.4)] p-[32px] w-full h-[420px] flex flex-col relative z-10">
-                  
-                  {/* Card Header */}
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="w-[72px] h-[72px] rounded-full bg-primary flex items-center justify-center text-white font-bold text-[28px] shrink-0 overflow-hidden">
-                      <img src="/assets/images/worker-electrician.png" alt="Ramesh Kumar" className="w-full h-full object-cover" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-3 mb-1">
-                        <h3 className="text-white font-bold text-[18px]">{t("Ramesh Kumar")}</h3>
-                        <div className="bg-primary/20 text-primary px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider">
-                          ⚡ {t("Electrician")}
+              {/* Desktop Worker Card */}
+              <motion.div
+                className="relative w-full max-w-[500px] z-10 hidden md:block"
+                {...(prefersReduced ? {} : {
+                  initial: { opacity: 0, x: 60, rotate: 2 },
+                  animate: { opacity: 1, x: 0, rotate: 0 },
+                  transition: { duration: dur(1, isMobile), delay: 0.4, type: "spring", stiffness: 100 },
+                })}
+              >
+                {/* Floating wrapper for infinite y animation */}
+                <motion.div
+                  animate={!prefersReduced && !isMobile ? { y: [-8, 8, -8] } : {}}
+                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  {/* Main CSS Card */}
+                  <div className="bg-[#1a2e1a] rounded-[24px] border border-[rgba(34,197,94,0.2)] shadow-[0_24px_60px_rgba(0,0,0,0.4)] p-[32px] w-full h-[420px] flex flex-col relative z-10">
+                    
+                    {/* Card Header */}
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="w-[72px] h-[72px] rounded-full bg-primary flex items-center justify-center text-white font-bold text-[28px] shrink-0 overflow-hidden">
+                        <img src="/assets/images/worker-electrician.png" alt="Ramesh Kumar" className="w-full h-full object-cover" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-3 mb-1">
+                          <h3 className="text-white font-bold text-[18px]">{t("Ramesh Kumar")}</h3>
+                          <div className="bg-primary/20 text-primary px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider">
+                            ⚡ {t("Electrician")}
+                          </div>
+                        </div>
+                        <div className="text-[#9ca3af] text-[13px] mb-1">
+                          📍 {t("Patna Rural")} &middot; {t("2.3 km")}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="text-primary tracking-widest text-[14px]">★★★★★</div>
+                          <div className="text-[#9ca3af] text-[12px]">({t("42 reviews")})</div>
                         </div>
                       </div>
-                      <div className="text-[#9ca3af] text-[13px] mb-1">
-                        📍 {t("Patna Rural")} &middot; {t("2.3 km")}
+                    </div>
+
+                    {/* Divider */}
+                    <div className="h-[1px] w-full bg-primary/15 mb-4 shrink-0"></div>
+
+                    {/* Stats Row */}
+                    <div className="grid grid-cols-3 gap-4 text-center mb-4 shrink-0">
+                      <div>
+                        <div className="text-white font-bold text-[24px]">127</div>
+                        <div className="text-[#9ca3af] text-[12px]">{t("Jobs Done")}</div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <div className="text-primary tracking-widest text-[14px]">★★★★★</div>
-                        <div className="text-[#9ca3af] text-[12px]">({t("42 reviews")})</div>
+                      <div>
+                        <div className="text-primary font-bold text-[24px]">4.8★</div>
+                        <div className="text-[#9ca3af] text-[12px]">{t("Rating")}</div>
+                      </div>
+                      <div>
+                        <div className="text-white font-bold text-[24px]">{t("< 1hr")}</div>
+                        <div className="text-[#9ca3af] text-[12px]">{t("Response")}</div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Divider */}
-                  <div className="h-[1px] w-full bg-primary/15 mb-4 shrink-0"></div>
-
-                  {/* Stats Row */}
-                  <div className="grid grid-cols-3 gap-4 text-center mb-4 shrink-0">
-                    <div>
-                      <div className="text-white font-bold text-[24px]">127</div>
-                      <div className="text-[#9ca3af] text-[12px]">{t("Jobs Done")}</div>
-                    </div>
-                    <div>
-                      <div className="text-primary font-bold text-[24px]">4.8★</div>
-                      <div className="text-[#9ca3af] text-[12px]">{t("Rating")}</div>
-                    </div>
-                    <div>
-                      <div className="text-white font-bold text-[24px]">{t("< 1hr")}</div>
-                      <div className="text-[#9ca3af] text-[12px]">{t("Response")}</div>
-                    </div>
-                  </div>
-
-                  {/* Availability Banner */}
-                  <div className="bg-primary/10 border border-primary/30 rounded-[12px] p-[12px_16px] flex items-center justify-between mb-4 shrink-0">
-                    <div className="flex items-center gap-3">
-                      <div className="w-[10px] h-[10px] rounded-full bg-primary animate-pulse"></div>
-                      <span className="text-primary font-bold text-[14px]">{t("Available Now")}</span>
-                    </div>
-                    <div className="text-white font-bold text-[18px]">&#8377;400<span className="text-[#9ca3af] text-[14px] font-normal">{t("/day")}</span></div>
-                  </div>
-
-                  {/* Recent Jobs */}
-                  <div className="mb-4 flex-1">
-                    <div className="text-white font-bold text-[14px] mb-2">{t("Recent Jobs")}</div>
-                    <div className="space-y-2">
+                    {/* Availability Banner */}
+                    <div className="bg-primary/10 border border-primary/30 rounded-[12px] p-[12px_16px] flex items-center justify-between mb-4 shrink-0">
                       <div className="flex items-center gap-3">
-                        <div className="w-[32px] h-[32px] rounded-full bg-white/10 shrink-0"></div>
-                        <div className="flex-1 text-[13px]">
-                          <span className="text-white font-medium">{t("Wiring repair")}</span> <span className="text-[#9ca3af]">&middot; {t("Ara Village")}</span>
-                        </div>
-                        <div className="text-primary text-[11px] font-bold">✓ {t("Completed")}</div>
+                        <div className="w-[10px] h-[10px] rounded-full bg-primary animate-available-pulse"></div>
+                        <span className="text-primary font-bold text-[14px]">{t("Available Now")}</span>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <div className="w-[32px] h-[32px] rounded-full bg-white/10 shrink-0"></div>
-                        <div className="flex-1 text-[13px]">
-                          <span className="text-white font-medium">{t("Fan installation")}</span> <span className="text-[#9ca3af]">&middot; {t("Chapra")}</span>
+                      <div className="text-white font-bold text-[18px]">&#8377;400<span className="text-[#9ca3af] text-[14px] font-normal">{t("/day")}</span></div>
+                    </div>
+
+                    {/* Recent Jobs */}
+                    <div className="mb-4 flex-1">
+                      <div className="text-white font-bold text-[14px] mb-2">{t("Recent Jobs")}</div>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-3">
+                          <div className="w-[32px] h-[32px] rounded-full bg-white/10 shrink-0"></div>
+                          <div className="flex-1 text-[13px]">
+                            <span className="text-white font-medium">{t("Wiring repair")}</span> <span className="text-[#9ca3af]">&middot; {t("Ara Village")}</span>
+                          </div>
+                          <div className="text-primary text-[11px] font-bold">✓ {t("Completed")}</div>
                         </div>
-                        <div className="text-primary text-[11px] font-bold">✓ {t("Completed")}</div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="w-[32px] h-[32px] rounded-full bg-white/10 shrink-0"></div>
-                        <div className="flex-1 text-[13px]">
-                          <span className="text-white font-medium">{t("Switchboard fix")}</span> <span className="text-[#9ca3af]">&middot; {t("Muzaffarpur")}</span>
+                        <div className="flex items-center gap-3">
+                          <div className="w-[32px] h-[32px] rounded-full bg-white/10 shrink-0"></div>
+                          <div className="flex-1 text-[13px]">
+                            <span className="text-white font-medium">{t("Fan installation")}</span> <span className="text-[#9ca3af]">&middot; {t("Chapra")}</span>
+                          </div>
+                          <div className="text-primary text-[11px] font-bold">✓ {t("Completed")}</div>
                         </div>
-                        <div className="text-primary text-[11px] font-bold">✓ {t("Completed")}</div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-[32px] h-[32px] rounded-full bg-white/10 shrink-0"></div>
+                          <div className="flex-1 text-[13px]">
+                            <span className="text-white font-medium">{t("Switchboard fix")}</span> <span className="text-[#9ca3af]">&middot; {t("Muzaffarpur")}</span>
+                          </div>
+                          <div className="text-primary text-[11px] font-bold">✓ {t("Completed")}</div>
+                        </div>
                       </div>
                     </div>
+
+                    {/* Buttons */}
+                    <div className="flex gap-4 shrink-0 mt-auto">
+                      <button className="flex-1 bg-primary text-white font-bold py-3 rounded-[8px] hover:bg-green-600 transition-colors">
+                        {t("Book Now")}
+                      </button>
+                      <button className="flex-1 bg-transparent border-2 border-primary text-primary font-bold py-3 rounded-[8px] hover:bg-primary/10 transition-colors">
+                        {t("WhatsApp")}
+                      </button>
+                    </div>
+
                   </div>
+                </motion.div>
 
-                  {/* Buttons */}
-                  <div className="flex gap-4 shrink-0 mt-auto">
-                    <button className="flex-1 bg-primary text-white font-bold py-3 rounded-[8px] hover:bg-green-600 transition-colors">
-                      {t("Book Now")}
-                    </button>
-                    <button className="flex-1 bg-transparent border-2 border-primary text-primary font-bold py-3 rounded-[8px] hover:bg-primary/10 transition-colors">
-                      {t("WhatsApp")}
-                    </button>
-                  </div>
-
-                </div>
-
-                {/* Floating Badge (Top-Right) */}
-                <div className="absolute -top-[12px] -right-[12px] bg-primary rounded-[50px] px-[16px] py-[8px] text-dark font-bold text-[12px] shadow-lg z-20">
+                {/* Floating Badge (Top-Right) — Pulse */}
+                <motion.div
+                  className="absolute -top-[12px] -right-[12px] bg-primary rounded-[50px] px-[16px] py-[8px] text-dark font-bold text-[12px] shadow-lg z-20"
+                  animate={!prefersReduced ? {
+                    scale: [1, 1.05, 1],
+                    boxShadow: [
+                      "0 0 0px rgba(34,197,94,0)",
+                      "0 0 20px rgba(34,197,94,0.4)",
+                      "0 0 0px rgba(34,197,94,0)",
+                    ],
+                  } : {}}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
                   ⚡ {t("Live Matching")}
-                </div>
+                </motion.div>
 
                 {/* Floating Mini Card (Bottom-Left) */}
                 <div className="absolute -bottom-[20px] -left-[20px] bg-[#0f1a0f] rounded-[14px] p-[14px_18px] border border-[rgba(34,197,94,0.2)] shadow-xl z-20">
@@ -175,7 +537,7 @@ export default function Home() {
                 <div className="absolute -top-[20px] -left-[20px] bg-primary rounded-[50px] px-[14px] py-[6px] text-dark font-bold text-[12px] shadow-xl z-20">
                   ⭐ {t("Top Rated Worker")}
                 </div>
-              </div>
+              </motion.div>
 
               {/* Mobile View Card (Visible only on mobile) */}
               <div className="w-full md:hidden mt-8">
@@ -222,11 +584,19 @@ export default function Home() {
 
       {/* Marquee Section */}
       <section className="bg-[#0a1a0a] py-[60px] overflow-hidden w-[100vw] relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw]">
-        <div className="text-center mb-[32px]">
+        <motion.div
+          className="text-center mb-[32px]"
+          {...(prefersReduced ? {} : {
+            initial: { opacity: 0, y: 30 },
+            whileInView: { opacity: 1, y: 0 },
+            viewport: { once: true },
+            transition: { duration: dur(0.6, isMobile) },
+          })}
+        >
           <div className="text-primary text-[12px] tracking-[4px] uppercase font-bold">
             &bull; {t("WORKERS ACROSS INDIA")} &bull;
           </div>
-        </div>
+        </motion.div>
 
         <div className="marquee-container marquee-mask relative flex flex-col gap-6">
           
@@ -366,10 +736,10 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section className="py-[96px] bg-dark relative z-10 border-t border-white/5">
+      <section ref={featuresSectionRef} className="features-section py-[96px] bg-dark relative z-10 border-t border-white/5">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           
-          <div className="text-center md:text-left mb-12">
+          <div ref={featuresHeadlineRef} className="text-center md:text-left mb-12">
             <h2 className="font-serif text-[36px] md:text-[48px] font-bold text-white leading-[1.1]">
               {t("Skills for")} <span className="text-primary italic">{t("every village need")}</span>
             </h2>
@@ -381,10 +751,14 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             
             {/* CARD 1 */}
-            <div className="bg-[linear-gradient(135deg,#1a4d2e,#22c55e)] rounded-[20px] p-[40px_36px] min-h-[340px] flex flex-col shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] hover:brightness-[1.08] hover:-translate-y-[4px] transition-all duration-[250ms] ease-out w-full">
+            <motion.div
+              className="bg-[linear-gradient(135deg,#1a4d2e,#22c55e)] rounded-[20px] p-[40px_36px] min-h-[340px] flex flex-col shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] w-full"
+              {...whileInViewFadeUp(0)}
+              {...cardHover}
+            >
               <div>
-                <div className="bg-white/15 rounded-full p-[12px] w-[64px] h-[64px] flex items-center justify-center shrink-0">
-                  <Wrench className="w-[40px] h-[40px] text-white" strokeWidth={1.5} />
+                <div ref={el => featureIconRefs.current[0] = el} className="bg-white/15 rounded-full p-[12px] w-[64px] h-[64px] flex items-center justify-center shrink-0">
+                  <LottieIcon loadData={wrenchData} fallbackIcon={Wrench} size={40} />
                 </div>
                 <h3 className="font-sans font-bold text-[22px] text-white leading-[1.3] mt-[24px]">{t("Find skilled workers near you")}</h3>
                 <p className="font-sans text-[14px] text-white/80 leading-[1.7] mt-[12px]">
@@ -394,13 +768,17 @@ export default function Home() {
               <Link href="/workers" className="font-sans text-[14px] text-white underline mt-auto pt-6 hover:opacity-70 transition-opacity w-fit">
                 {t("Find workers")} &rarr;
               </Link>
-            </div>
+            </motion.div>
 
             {/* CARD 2 */}
-            <div className="bg-[linear-gradient(135deg,#1a4d2e,#22c55e)] rounded-[20px] p-[40px_36px] min-h-[340px] flex flex-col shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] hover:brightness-[1.08] hover:-translate-y-[4px] transition-all duration-[250ms] ease-out w-full">
+            <motion.div
+              className="bg-[linear-gradient(135deg,#1a4d2e,#22c55e)] rounded-[20px] p-[40px_36px] min-h-[340px] flex flex-col shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] w-full"
+              {...whileInViewFadeUp(0.15)}
+              {...cardHover}
+            >
               <div>
-                <div className="bg-white/15 rounded-full p-[12px] w-[64px] h-[64px] flex items-center justify-center shrink-0">
-                  <ClipboardList className="w-[40px] h-[40px] text-white" strokeWidth={1.5} />
+                <div ref={el => featureIconRefs.current[1] = el} className="bg-white/15 rounded-full p-[12px] w-[64px] h-[64px] flex items-center justify-center shrink-0">
+                  <LottieIcon loadData={clipboardData} fallbackIcon={ClipboardList} size={40} />
                 </div>
                 <h3 className="font-sans font-bold text-[22px] text-white leading-[1.3] mt-[24px]">{t("Post a job in 2 minutes")}</h3>
                 <p className="font-sans text-[14px] text-white/80 leading-[1.7] mt-[12px]">
@@ -410,13 +788,17 @@ export default function Home() {
               <Link href="/post-job" className="font-sans text-[14px] text-white underline mt-auto pt-6 hover:opacity-70 transition-opacity w-fit">
                 {t("Post a Job")} &rarr;
               </Link>
-            </div>
+            </motion.div>
 
             {/* CARD 3 */}
-            <div className="bg-[linear-gradient(135deg,#1a4d2e,#22c55e)] rounded-[20px] p-[40px_36px] min-h-[340px] flex flex-col shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] hover:brightness-[1.08] hover:-translate-y-[4px] transition-all duration-[250ms] ease-out w-full">
+            <motion.div
+              className="bg-[linear-gradient(135deg,#1a4d2e,#22c55e)] rounded-[20px] p-[40px_36px] min-h-[340px] flex flex-col shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] w-full"
+              {...whileInViewFadeUp(0.3)}
+              {...cardHover}
+            >
               <div>
-                <div className="bg-white/15 rounded-full p-[12px] w-[64px] h-[64px] flex items-center justify-center shrink-0">
-                  <BadgeCheck className="w-[40px] h-[40px] text-white" strokeWidth={1.5} />
+                <div ref={el => featureIconRefs.current[2] = el} className="bg-white/15 rounded-full p-[12px] w-[64px] h-[64px] flex items-center justify-center shrink-0">
+                  <LottieIcon loadData={badgeData} fallbackIcon={BadgeCheck} size={40} />
                 </div>
                 <h3 className="font-sans font-bold text-[22px] text-white leading-[1.3] mt-[24px]">{t("Earn from your own village")}</h3>
                 <p className="font-sans text-[14px] text-white/80 leading-[1.7] mt-[12px]">
@@ -426,19 +808,27 @@ export default function Home() {
               <Link href="/post-job" className="font-sans text-[14px] text-white underline mt-auto pt-6 hover:opacity-70 transition-opacity w-fit">
                 {t("Join as Worker")} &rarr;
               </Link>
-            </div>
+            </motion.div>
 
           </div>
         </div>
       </section>
 
       {/* About Section */}
-      <section id="about" className="bg-[#0f1a0f] py-[64px] md:py-[96px] relative overflow-hidden">
+      <section id="about" ref={aboutSectionRef} className="about-section bg-[#0f1a0f] py-[64px] md:py-[96px] relative overflow-hidden">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           
           <div className="flex flex-col md:flex-row items-center gap-[48px] md:gap-[80px]">
             {/* Left Column — Visual Side */}
-            <div className="w-full md:w-[45%] relative">
+            <motion.div
+              className="w-full md:w-[45%] relative"
+              {...(prefersReduced ? {} : {
+                initial: { opacity: 0, x: -80 },
+                whileInView: { opacity: 1, x: 0 },
+                viewport: { once: true },
+                transition: { duration: dur(0.9, isMobile), type: "spring", stiffness: 80 },
+              })}
+            >
               
               {/* Subtle radial green glow */}
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] h-[150%] bg-[radial-gradient(ellipse_at_center,rgba(34,197,94,0.06)_0%,transparent_70%)] z-0 pointer-events-none"></div>
@@ -458,77 +848,93 @@ export default function Home() {
                 </p>
               </div>
 
-              {/* 4 Floating Stat Cards */}
-              <div className="grid grid-cols-2 gap-[12px] mt-[12px] relative z-10">
+              {/* 4 Floating Stat Cards with Counters */}
+              <motion.div
+                className="grid grid-cols-2 gap-[12px] mt-[12px] relative z-10"
+                {...(prefersReduced ? {} : {
+                  initial: { opacity: 0, scale: 0.8 },
+                  whileInView: { opacity: 1, scale: 1 },
+                  viewport: { once: true },
+                  transition: { duration: dur(0.6, isMobile), delay: 0.3 },
+                })}
+              >
                 <div className="bg-[#0f1a0f] border border-[rgba(34,197,94,0.2)] rounded-[14px] p-[16px_20px] text-center">
-                  <div className="font-serif font-bold text-[32px] text-[#22c55e]">500+</div>
+                  <div ref={el => aboutStatRefs.current[0] = el} className="font-serif font-bold text-[32px] text-[#22c55e]">500+</div>
                   <div className="font-sans text-[12px] text-[#9ca3af] uppercase tracking-[1px] mt-1">{t("Villages Covered")}</div>
                 </div>
                 <div className="bg-[#0f1a0f] border border-[rgba(34,197,94,0.2)] rounded-[14px] p-[16px_20px] text-center">
-                  <div className="font-serif font-bold text-[32px] text-[#22c55e]">10K+</div>
+                  <div ref={el => aboutStatRefs.current[1] = el} className="font-serif font-bold text-[32px] text-[#22c55e]">10K+</div>
                   <div className="font-sans text-[12px] text-[#9ca3af] uppercase tracking-[1px] mt-1">{t("Workers Registered")}</div>
                 </div>
                 <div className="bg-[#0f1a0f] border border-[rgba(34,197,94,0.2)] rounded-[14px] p-[16px_20px] text-center">
-                  <div className="font-serif font-bold text-[32px] text-[#22c55e]">25K+</div>
+                  <div ref={el => aboutStatRefs.current[2] = el} className="font-serif font-bold text-[32px] text-[#22c55e]">25K+</div>
                   <div className="font-sans text-[12px] text-[#9ca3af] uppercase tracking-[1px] mt-1">{t("Jobs Completed")}</div>
                 </div>
                 <div className="bg-[#0f1a0f] border border-[rgba(34,197,94,0.2)] rounded-[14px] p-[16px_20px] text-center">
-                  <div className="font-serif font-bold text-[32px] text-[#22c55e]">4.8★</div>
+                  <div ref={el => aboutStatRefs.current[3] = el} className="font-serif font-bold text-[32px] text-[#22c55e]">4.8★</div>
                   <div className="font-sans text-[12px] text-[#9ca3af] uppercase tracking-[1px] mt-1">{t("Average Rating")}</div>
                 </div>
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
 
             {/* Right Column — Text Content */}
-            <div className="w-full md:w-[55%] relative">
+            <div ref={aboutRightRef} className="about-right w-full md:w-[55%] relative">
               {/* Thin vertical green accent line */}
-              <div className="w-[3px] h-[60px] bg-[#22c55e] rounded-[2px] mb-[20px]"></div>
+              <div ref={accentLineRef} className="accent-line w-[3px] h-[60px] bg-[#22c55e] rounded-[2px] mb-[20px]"></div>
 
-              <div className="flex items-center gap-2 mb-[16px]">
+              <div className="about-line flex items-center gap-2 mb-[16px]">
                 <span className="text-[#22c55e] text-[12px] tracking-[3px] uppercase">{t("WHO WE ARE")}</span>
               </div>
 
-              <h2 className="font-serif font-bold text-[36px] md:text-[48px] text-white leading-[1.2] mb-6">
+              <h2 className="about-line font-serif font-bold text-[36px] md:text-[48px] text-white leading-[1.2] mb-6">
                 {t("Built for Bharat's")}<br />{t("forgotten workforce")}
               </h2>
 
-              <p className="font-sans text-[16px] text-[#9ca3af] leading-[1.8] mb-[20px]">
+              <p className="about-line font-sans text-[16px] text-[#9ca3af] leading-[1.8] mb-[20px]">
                 {t("VillageWork was born from a simple observation — India's most skilled workers live in its villages, but its biggest opportunities live in cities. We decided to change that.")}
               </p>
 
-              <p className="font-sans text-[16px] text-[#9ca3af] leading-[1.8] mb-[32px]">
+              <p className="about-line font-sans text-[16px] text-[#9ca3af] leading-[1.8] mb-[32px]">
                 {t("We built a hyperlocal platform where an electrician in Bihar can find his first digital client, a tailor in UP can grow a loyal customer base, and a tutor in Bengal can teach without travelling miles — all in their own language, in their own village.")}
               </p>
 
               <div className="flex flex-col gap-[20px] mb-[36px]">
-                <div className="flex items-start gap-4">
-                  <div className="mt-1"><Check className="w-[20px] h-[20px] text-[#22c55e]" strokeWidth={3} /></div>
-                  <div>
-                    <div className="font-bold text-white mb-1">{t("No English required")}</div>
-                    <div className="text-[#9ca3af] text-[14px] leading-relaxed">{t("Full platform available in Hindi, Bengali, Tamil and more")}</div>
-                  </div>
-                </div>
-                
-                <div className="flex items-start gap-4">
-                  <div className="mt-1"><Check className="w-[20px] h-[20px] text-[#22c55e]" strokeWidth={3} /></div>
-                  <div>
-                    <div className="font-bold text-white mb-1">{t("No app download needed")}</div>
-                    <div className="text-[#9ca3af] text-[14px] leading-relaxed">{t("Workers receive jobs directly on WhatsApp — zero friction")}</div>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4">
-                  <div className="mt-1"><Check className="w-[20px] h-[20px] text-[#22c55e]" strokeWidth={3} /></div>
-                  <div>
-                    <div className="font-bold text-white mb-1">{t("Government backed")}</div>
-                    <div className="text-[#9ca3af] text-[14px] leading-relaxed">{t("Integrated with Skill India and PM Vishwakarma schemes")}</div>
-                  </div>
-                </div>
+                {[
+                  { title: t("No English required"), desc: t("Full platform available in Hindi, Bengali, Tamil and more") },
+                  { title: t("No app download needed"), desc: t("Workers receive jobs directly on WhatsApp — zero friction") },
+                  { title: t("Government backed"), desc: t("Integrated with Skill India and PM Vishwakarma schemes") },
+                ].map((item, index) => (
+                  <motion.div
+                    key={index}
+                    className="flex items-start gap-4"
+                    {...(prefersReduced ? {} : {
+                      initial: { opacity: 0, x: 40 },
+                      whileInView: { opacity: 1, x: 0 },
+                      viewport: { once: true },
+                      transition: { delay: index * 0.2, duration: dur(0.6, isMobile) },
+                    })}
+                  >
+                    <div className="mt-1"><Check className="w-[20px] h-[20px] text-[#22c55e]" strokeWidth={3} /></div>
+                    <div>
+                      <div className="font-bold text-white mb-1">{item.title}</div>
+                      <div className="text-[#9ca3af] text-[14px] leading-relaxed">{item.desc}</div>
+                    </div>
+                  </motion.div>
+                ))}
               </div>
 
-              <Link href="/about" className="inline-block bg-transparent border-[1.5px] border-[#22c55e] text-white px-[28px] py-[12px] rounded-[8px] font-bold hover:bg-[#22c55e] hover:text-[#0f1a0f] transition-colors mt-[16px]">
-                {t("Learn Our Story")} &rarr;
-              </Link>
+              <motion.div
+                {...(prefersReduced ? {} : {
+                  initial: { opacity: 0, y: 20 },
+                  whileInView: { opacity: 1, y: 0 },
+                  viewport: { once: true },
+                  transition: { delay: 0.6, duration: dur(0.5, isMobile) },
+                })}
+              >
+                <Link href="/about" className="inline-block bg-transparent border-[1.5px] border-[#22c55e] text-white px-[28px] py-[12px] rounded-[8px] font-bold hover:bg-[#22c55e] hover:text-[#0f1a0f] transition-colors mt-[16px]">
+                  {t("Learn Our Story")} &rarr;
+                </Link>
+              </motion.div>
             </div>
             
           </div>
@@ -536,7 +942,7 @@ export default function Home() {
       </section>
 
       {/* How It Works Section */}
-      <section id="how-it-works" className="py-24 bg-dark">
+      <section id="how-it-works" className="how-it-works py-24 bg-dark">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="font-serif text-[48px] font-bold text-white mb-12 text-left">
             {t("How it Works")}
@@ -545,11 +951,20 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
             {/* Card 1 */}
-            <div 
-              className="bg-card rounded-[20px] p-[40px_32px] border border-[rgba(255,255,255,0.08)] hover:border-[rgba(34,197,94,0.3)] hover:shadow-[0_0_30px_rgba(34,197,94,0.1)] transition-all duration-200 flex flex-col cursor-pointer"
+            <motion.div
+              className="bg-card rounded-[20px] p-[40px_32px] border border-[rgba(255,255,255,0.08)] cursor-pointer"
               onClick={() => toggleStep(1)}
+              initial={prefersReduced ? {} : { opacity: 0, y: 50 }}
+              whileInView={prefersReduced ? {} : { opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: dur(0.7, isMobile), delay: 0 }}
+              whileHover={prefersReduced ? {} : {
+                borderColor: "rgba(34,197,94,0.4)",
+                y: -8,
+                boxShadow: "0 20px 50px rgba(34,197,94,0.1)",
+              }}
             >
-              <div className="font-serif font-bold text-[80px] text-white/90 leading-none mb-6">1</div>
+              <motion.div {...whileInViewScaleBounce(0.3)} className="font-serif font-bold text-[80px] text-white/90 leading-none mb-6">1</motion.div>
               <div className="flex items-center gap-2 mb-4">
                 <h3 className="text-white font-bold text-[24px]">{t("Post a Job")}</h3>
                 {expandedStep === 1 ? (
@@ -559,18 +974,32 @@ export default function Home() {
                 )}
               </div>
               {expandedStep === 1 && (
-                <p className="text-[#9ca3af] text-[14px] font-sans leading-[1.8] animate-in fade-in slide-in-from-top-2 duration-300">
+                <motion.p
+                  className="text-[#9ca3af] text-[14px] font-sans leading-[1.8]"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
                   {t("Tell us the skill you need and when. Add your village name, budget, and preferred date. Done in under 2 minutes — no English required.")}
-                </p>
+                </motion.p>
               )}
-            </div>
+            </motion.div>
 
             {/* Card 2 */}
-            <div 
-              className="bg-card rounded-[20px] p-[40px_32px] border border-[rgba(255,255,255,0.08)] hover:border-[rgba(34,197,94,0.3)] hover:shadow-[0_0_30px_rgba(34,197,94,0.1)] transition-all duration-200 flex flex-col cursor-pointer"
+            <motion.div
+              className="bg-card rounded-[20px] p-[40px_32px] border border-[rgba(255,255,255,0.08)] cursor-pointer"
               onClick={() => toggleStep(2)}
+              initial={prefersReduced ? {} : { opacity: 0, y: 50 }}
+              whileInView={prefersReduced ? {} : { opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: dur(0.7, isMobile), delay: 0.2 }}
+              whileHover={prefersReduced ? {} : {
+                borderColor: "rgba(34,197,94,0.4)",
+                y: -8,
+                boxShadow: "0 20px 50px rgba(34,197,94,0.1)",
+              }}
             >
-              <div className="font-serif font-bold text-[80px] text-white/90 leading-none mb-6">2</div>
+              <motion.div {...whileInViewScaleBounce(0.5)} className="font-serif font-bold text-[80px] text-white/90 leading-none mb-6">2</motion.div>
               <div className="flex items-center gap-2 mb-4">
                 <h3 className="text-white font-bold text-[24px]">{t("Get AI-Matched")}</h3>
                 {expandedStep === 2 ? (
@@ -580,18 +1009,32 @@ export default function Home() {
                 )}
               </div>
               {expandedStep === 2 && (
-                <p className="text-[#9ca3af] text-[14px] font-sans leading-[1.8] animate-in fade-in slide-in-from-top-2 duration-300">
+                <motion.p
+                  className="text-[#9ca3af] text-[14px] font-sans leading-[1.8]"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
                   {t("Our engine matches you with the top 3 workers by skill, proximity, rating, and availability — instantly. View their profiles before you decide.")}
-                </p>
+                </motion.p>
               )}
-            </div>
+            </motion.div>
 
             {/* Card 3 */}
-            <div 
-              className="bg-card rounded-[20px] p-[40px_32px] border border-[rgba(255,255,255,0.08)] hover:border-[rgba(34,197,94,0.3)] hover:shadow-[0_0_30px_rgba(34,197,94,0.1)] transition-all duration-200 flex flex-col cursor-pointer"
+            <motion.div
+              className="bg-card rounded-[20px] p-[40px_32px] border border-[rgba(255,255,255,0.08)] cursor-pointer"
               onClick={() => toggleStep(3)}
+              initial={prefersReduced ? {} : { opacity: 0, y: 50 }}
+              whileInView={prefersReduced ? {} : { opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: dur(0.7, isMobile), delay: 0.4 }}
+              whileHover={prefersReduced ? {} : {
+                borderColor: "rgba(34,197,94,0.4)",
+                y: -8,
+                boxShadow: "0 20px 50px rgba(34,197,94,0.1)",
+              }}
             >
-              <div className="font-serif font-bold text-[80px] text-white/90 leading-none mb-6">3</div>
+              <motion.div {...whileInViewScaleBounce(0.7)} className="font-serif font-bold text-[80px] text-white/90 leading-none mb-6">3</motion.div>
               <div className="flex items-center gap-2 mb-4">
                 <h3 className="text-white font-bold text-[24px]">{t("Accept via WhatsApp")}</h3>
                 {expandedStep === 3 ? (
@@ -601,11 +1044,16 @@ export default function Home() {
                 )}
               </div>
               {expandedStep === 3 && (
-                <p className="text-[#9ca3af] text-[14px] font-sans leading-[1.8] animate-in fade-in slide-in-from-top-2 duration-300">
+                <motion.p
+                  className="text-[#9ca3af] text-[14px] font-sans leading-[1.8]"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
                   {t("Workers get a WhatsApp alert with job details. One tap to accept. Complete the work, earn your pay, and grow your village reputation.")}
-                </p>
+                </motion.p>
               )}
-            </div>
+            </motion.div>
 
           </div>
         </div>
@@ -614,59 +1062,74 @@ export default function Home() {
       {/* Testimonials */}
       <section className="py-24 bg-dark border-t border-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
+          <motion.div
+            className="text-center mb-16"
+            {...(prefersReduced ? {} : {
+              initial: { opacity: 0, y: 40 },
+              whileInView: { opacity: 1, y: 0 },
+              viewport: { once: true },
+              transition: { duration: dur(0.7, isMobile) },
+            })}
+          >
             <div className="inline-flex items-center gap-2 text-primary text-sm font-bold tracking-widest uppercase mb-4">
               <span className="w-2 h-2 rounded-full bg-primary"></span> {t("VOICES FROM THE VILLAGE")}
             </div>
             <h2 className="font-serif text-4xl md:text-5xl font-bold text-white mb-6">{t("Real Workers. Real Stories.")}</h2>
-          </div>
+          </motion.div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-card p-8 rounded-r-2xl rounded-l-none border-l-4 border-primary shadow-lg shadow-black/20 relative">
-              <div className="text-primary text-4xl font-serif absolute top-6 left-6 opacity-30">&quot;</div>
-              <p className="text-white italic leading-relaxed mb-6 pt-4 text-lg">
-                {t("VillageWork gave me 3 clients in my first week. I never thought I could find work without going to the city.")}
-              </p>
-              <div>
-                <div className="text-primary font-bold">{t("Ramesh Kumar")}</div>
-                <div className="text-gray-500 text-sm font-sans">{t("Electrician")} &middot; {t("Patna Rural")}</div>
-              </div>
-            </div>
-            
-            <div className="bg-card p-8 rounded-r-2xl rounded-l-none border-l-4 border-primary shadow-lg shadow-black/20 relative">
-              <div className="text-primary text-4xl font-serif absolute top-6 left-6 opacity-30">&quot;</div>
-              <p className="text-white italic leading-relaxed mb-6 pt-4 text-lg">
-                {t("I found a trusted plumber in 10 minutes. The reviews made me feel safe hiring someone I had never met before.")}
-              </p>
-              <div>
-                <div className="text-primary font-bold">{t("Sunita Devi")}</div>
-                <div className="text-gray-500 text-sm font-sans">{t("Homemaker")} &middot; {t("Ara Village")}</div>
-              </div>
-            </div>
-            
-            <div className="bg-card p-8 rounded-r-2xl rounded-l-none border-l-4 border-primary shadow-lg shadow-black/20 relative">
-              <div className="text-primary text-4xl font-serif absolute top-6 left-6 opacity-30">&quot;</div>
-              <p className="text-white italic leading-relaxed mb-6 pt-4 text-lg">
-                {t("My tailoring orders doubled. Now I earn ₹18,000 a month without leaving my village.")}
-              </p>
-              <div>
-                <div className="text-primary font-bold">{t("Priya Sharma")}</div>
-                <div className="text-gray-500 text-sm font-sans">{t("Tailor")} &middot; {t("Muzaffarpur")}</div>
-              </div>
-            </div>
+            {[
+              { quote: t("VillageWork gave me 3 clients in my first week. I never thought I could find work without going to the city."), name: t("Ramesh Kumar"), role: `${t("Electrician")} · ${t("Patna Rural")}` },
+              { quote: t("I found a trusted plumber in 10 minutes. The reviews made me feel safe hiring someone I had never met before."), name: t("Sunita Devi"), role: `${t("Homemaker")} · ${t("Ara Village")}` },
+              { quote: t("My tailoring orders doubled. Now I earn ₹18,000 a month without leaving my village."), name: t("Priya Sharma"), role: `${t("Tailor")} · ${t("Muzaffarpur")}` },
+            ].map((testimonial, index) => (
+              <motion.div
+                key={index}
+                className="bg-card p-8 rounded-r-2xl rounded-l-none border-l-4 border-primary shadow-lg shadow-black/20 relative"
+                {...(prefersReduced ? {} : {
+                  initial: { opacity: 0, y: 60 },
+                  whileInView: { opacity: 1, y: 0 },
+                  viewport: { once: true },
+                  transition: { duration: dur(0.6, isMobile), delay: index * 0.15 },
+                })}
+              >
+                <div className="text-primary text-4xl font-serif absolute top-6 left-6 opacity-30">&quot;</div>
+                <p className="text-white italic leading-relaxed mb-6 pt-4 text-lg">
+                  {testimonial.quote}
+                </p>
+                <div>
+                  <div className="text-primary font-bold">{testimonial.name}</div>
+                  <div className="text-gray-500 text-sm font-sans">{testimonial.role}</div>
+                </div>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
       <section className="py-24 bg-[#1a3d2b]">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <motion.div
+          className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center"
+          {...(prefersReduced ? {} : {
+            initial: { opacity: 0, scale: 0.95, y: 40 },
+            whileInView: { opacity: 1, scale: 1, y: 0 },
+            viewport: { once: true },
+            transition: { duration: dur(0.8, isMobile) },
+          })}
+        >
           <h2 className="font-serif text-4xl md:text-5xl font-bold text-white mb-6">{t("Ready to earn from your village?")}</h2>
           <p className="text-green-100 text-xl mb-10 opacity-90 font-sans">{t("Join 10,000+ workers already on VillageWork")}</p>
-          <button className="bg-white text-dark px-10 py-4 rounded-full font-bold text-lg hover:bg-gray-100 transition-colors shadow-xl">
+          <motion.button
+            className="bg-white text-dark px-10 py-4 rounded-full font-bold text-lg hover:bg-gray-100 transition-colors shadow-xl"
+            {...(prefersReduced ? {} : {
+              whileHover: { scale: 1.05, boxShadow: "0 20px 40px rgba(0,0,0,0.2)" },
+              whileTap: { scale: 0.97 },
+            })}
+          >
             {t("Get Started")} {t("Free")}
-          </button>
-        </div>
+          </motion.button>
+        </motion.div>
       </section>
     </div>
   );
