@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import Link from 'next/link';
 import { useLanguage } from '@/context/LanguageContext';
-import { Wrench, FileText, ShieldCheck, ChevronUp, ChevronDown, ClipboardList, BadgeCheck, Check, Scissors, Hammer, GraduationCap, Droplets, PaintBucket, Building, Leaf } from 'lucide-react';
+import { MapPin, Coins, ShieldCheck, ChevronUp, ChevronDown, ClipboardList, Check, Scissors, Hammer, GraduationCap, Droplets, PaintBucket, Building, Leaf, Wrench } from 'lucide-react';
 import { motion } from 'framer-motion';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -11,55 +11,6 @@ import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { useIsMobile } from '@/hooks/useIsMobile';
 
 gsap.registerPlugin(ScrollTrigger);
-
-// Lazy-load Lottie for performance
-const Lottie = lazy(() => import('lottie-react'));
-
-// Lazy-load Lottie JSON data
-const wrenchData = () => import('@/components/animations/lottie/wrench.json').then(m => m.default);
-const clipboardData = () => import('@/components/animations/lottie/clipboard.json').then(m => m.default);
-const badgeData = () => import('@/components/animations/lottie/badge.json').then(m => m.default);
-const checkmarkData = () => import('@/components/animations/lottie/checkmark.json').then(m => m.default);
-
-// ===== Lottie Icon Component (lazy-loaded) =====
-function LottieIcon({ loadData, fallbackIcon: FallbackIcon, size = 40, className = "" }) {
-  const lottieRef = useRef(null);
-  const [animData, setAnimData] = useState(null);
-  const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    loadData().then(data => {
-      setAnimData(data);
-      setLoaded(true);
-    });
-  }, [loadData]);
-
-  if (!loaded || !animData) {
-    return <FallbackIcon className={`w-[${size}px] h-[${size}px] text-white`} strokeWidth={1.5} />;
-  }
-
-  return (
-    <Suspense fallback={<FallbackIcon className={`w-[${size}px] h-[${size}px] text-white`} strokeWidth={1.5} />}>
-      <div
-        className={className}
-        onMouseEnter={() => {
-          if (lottieRef.current) {
-            lottieRef.current.goToAndPlay(0);
-          }
-        }}
-        style={{ width: size, height: size }}
-      >
-        <Lottie
-          lottieRef={lottieRef}
-          animationData={animData}
-          loop={false}
-          autoplay={false}
-          style={{ width: size, height: size }}
-        />
-      </div>
-    </Suspense>
-  );
-}
 
 // ===== Duration helper for mobile =====
 function dur(base, isMobile) {
@@ -757,8 +708,8 @@ export default function Home() {
               {...cardHover}
             >
               <div>
-                <div ref={el => featureIconRefs.current[0] = el} className="bg-white/15 rounded-full p-[12px] w-[64px] h-[64px] flex items-center justify-center shrink-0">
-                  <LottieIcon loadData={wrenchData} fallbackIcon={Wrench} size={40} />
+                <div className="w-[56px] h-[56px] rounded-full bg-white/15 flex items-center justify-center backdrop-blur-[4px] shrink-0">
+                  <MapPin size={28} color="white" strokeWidth={1.8} />
                 </div>
                 <h3 className="font-sans font-bold text-[22px] text-white leading-[1.3] mt-[24px]">{t("Find skilled workers near you")}</h3>
                 <p className="font-sans text-[14px] text-white/80 leading-[1.7] mt-[12px]">
@@ -777,8 +728,8 @@ export default function Home() {
               {...cardHover}
             >
               <div>
-                <div ref={el => featureIconRefs.current[1] = el} className="bg-white/15 rounded-full p-[12px] w-[64px] h-[64px] flex items-center justify-center shrink-0">
-                  <LottieIcon loadData={clipboardData} fallbackIcon={ClipboardList} size={40} />
+                <div className="w-[56px] h-[56px] rounded-full bg-white/15 flex items-center justify-center backdrop-blur-[4px] shrink-0">
+                  <ClipboardList size={28} color="white" strokeWidth={1.8} />
                 </div>
                 <h3 className="font-sans font-bold text-[22px] text-white leading-[1.3] mt-[24px]">{t("Post a job in 2 minutes")}</h3>
                 <p className="font-sans text-[14px] text-white/80 leading-[1.7] mt-[12px]">
@@ -797,8 +748,8 @@ export default function Home() {
               {...cardHover}
             >
               <div>
-                <div ref={el => featureIconRefs.current[2] = el} className="bg-white/15 rounded-full p-[12px] w-[64px] h-[64px] flex items-center justify-center shrink-0">
-                  <LottieIcon loadData={badgeData} fallbackIcon={BadgeCheck} size={40} />
+                <div className="w-[56px] h-[56px] rounded-full bg-white/15 flex items-center justify-center backdrop-blur-[4px] shrink-0">
+                  <Coins size={28} color="white" strokeWidth={1.8} />
                 </div>
                 <h3 className="font-sans font-bold text-[22px] text-white leading-[1.3] mt-[24px]">{t("Earn from your own village")}</h3>
                 <p className="font-sans text-[14px] text-white/80 leading-[1.7] mt-[12px]">
