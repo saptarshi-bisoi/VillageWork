@@ -88,8 +88,8 @@ export default function SearchPage() {
       {filteredWorkers.length > 0 ? (
         viewMode === 'list' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {filteredWorkers.map(worker => (
-              <WorkerCard key={worker.id} worker={worker} />
+            {filteredWorkers.map((worker, index) => (
+              <WorkerCard key={worker.id} worker={worker} index={index} />
             ))}
           </div>
         ) : (

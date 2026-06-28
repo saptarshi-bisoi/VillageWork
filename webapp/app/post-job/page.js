@@ -128,8 +128,8 @@ export default function PostJobPage() {
           
           {matchedWorkers.length > 0 ? (
             <div className="space-y-6">
-              {matchedWorkers.map(worker => (
-                <WorkerCard key={worker.id} worker={worker} />
+              {matchedWorkers.map((worker, index) => (
+                <WorkerCard key={worker.id} worker={worker} index={index} />
               ))}
             </div>
           ) : (

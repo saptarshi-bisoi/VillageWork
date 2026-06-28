@@ -1,9 +1,32 @@
+"use client";
+
 import { MapPin, Star, BadgeCheck } from 'lucide-react';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 
-export default function WorkerCard({ worker }) {
+export default function WorkerCard({ worker, index = 0 }) {
+  const prefersReduced = useReducedMotion();
+
   return (
-    <div className="bg-card rounded-2xl p-6 border border-white/5 hover:border-primary/30 transition-colors group">
+    <motion.div
+      className="bg-card rounded-2xl p-6 border border-white/5 group"
+      {...(prefersReduced ? {} : {
+        initial: { opacity: 0, y: 60 },
+        whileInView: { opacity: 1, y: 0 },
+        viewport: { once: true, margin: "-50px" },
+        transition: {
+          duration: 0.6,
+          delay: index * 0.1,
+          ease: "easeOut",
+        },
+        whileHover: {
+          y: -8,
+          scale: 1.02,
+          borderColor: "rgba(34,197,94,0.35)",
+        },
+      })}
+    >
       <div className="flex items-start justify-between mb-4">
         <div className="relative">
           <div className="w-16 h-16 rounded-full bg-gray-700 overflow-hidden relative">
@@ -16,7 +39,7 @@ export default function WorkerCard({ worker }) {
             )}
           </div>
           {worker.available && (
-            <div className="absolute top-0 right-0 w-4 h-4 bg-primary border-2 border-card rounded-full" title="Available Today"></div>
+            <div className="absolute top-0 right-0 w-4 h-4 bg-primary border-2 border-card rounded-full animate-available-pulse" title="Available Today"></div>
           )}
         </div>
         <div className="bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase">
@@ -57,6 +80,6 @@ export default function WorkerCard({ worker }) {
           WhatsApp
         </button>
       </div>
-    </div>
+    </motion.div>
   );
 }
