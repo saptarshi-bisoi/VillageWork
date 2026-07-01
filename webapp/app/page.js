@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState, useEffect, useRef, lazy, Suspense } from 'react';
@@ -22,6 +23,93 @@ export default function Home() {
   const [expandedStep, setExpandedStep] = useState(null);
   const prefersReduced = useReducedMotion();
   const isMobile = useIsMobile();
+  const [isMounted, setIsMounted] = useState(false);
+  const [isScrolling, setIsScrolling] = useState(false);
+
+  // ===== 3D Hover Tilt Effect State & Handlers =====
+  const cardRef = useRef(null);
+  const [tilt, setTilt] = useState({ 
+    rotateX: 0, 
+    rotateY: 0,
+    glareX: 50,
+    glareY: 50
+  });
+  const [isHovered, setIsHovered] = useState(false);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
+    }
+  }, []);
+
+  const handleMouseMove = (e) => {
+    if (isTouchDevice || prefersReduced || !cardRef.current) return;
+    
+    const card = cardRef.current;
+    const rect = card.getBoundingClientRect();
+    
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const mouseX = e.clientX - centerX;
+    const mouseY = e.clientY - centerY;
+    
+    const rotateY = (mouseX / (rect.width / 2)) * 12;
+    const rotateX = -(mouseY / (rect.height / 2)) * 12;
+    
+    const glareX = ((e.clientX - rect.left) / rect.width) * 100;
+    const glareY = ((e.clientY - rect.top) / rect.height) * 100;
+    
+    setTilt({ rotateX, rotateY, glareX, glareY });
+  };
+
+  const handleMouseEnter = () => {
+    if (isTouchDevice || prefersReduced) return;
+    setIsHovered(true);
+  };
+
+  const handleMouseLeave = () => {
+    if (isTouchDevice || prefersReduced) return;
+    setIsHovered(false);
+    setTilt({ 
+      rotateX: 0, 
+      rotateY: 0,
+      glareX: 50,
+      glareY: 50
+    });
+    setTimeout(() => {
+      if (cardRef.current) {
+        cardRef.current.style.willChange = 'auto';
+      }
+    }, 600);
+  };
+
+  const glowX = tilt.rotateY * 2;
+  const glowY = tilt.rotateX * -2;
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Scroll detection for breathing animations
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    let scrollTimeout;
+    const handleScroll = () => {
+      setIsScrolling(true);
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        setIsScrolling(false);
+      }, 1000);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      clearTimeout(scrollTimeout);
+    };
+  }, []);
+
+
 
   // Refs for GSAP animations
   const heroTitleRef = useRef(null);
@@ -33,6 +121,7 @@ export default function Home() {
   const stat3Ref = useRef(null);
   const leafLeftRef = useRef(null);
   const leafRightRef = useRef(null);
+  const beamRef = useRef(null);
   const featuresHeadlineRef = useRef(null);
   const featuresSectionRef = useRef(null);
   const aboutRightRef = useRef(null);
@@ -91,30 +180,36 @@ export default function Home() {
         });
       }
 
-      // --- Botanical Leaves Parallax (desktop only) ---
-      if (!isMobile) {
-        if (leafLeftRef.current) {
-          gsap.to(leafLeftRef.current, {
-            y: -60,
-            scrollTrigger: {
-              trigger: ".hero-section",
-              start: "top top",
-              end: "bottom top",
-              scrub: 1.5,
-            },
-          });
-        }
-        if (leafRightRef.current) {
-          gsap.to(leafRightRef.current, {
-            y: -40,
-            scrollTrigger: {
-              trigger: ".hero-section",
-              start: "top top",
-              end: "bottom top",
-              scrub: 2,
-            },
-          });
-        }
+      // --- Botanical Leaves Parallax / Curtain Opening Effect on Scroll ---
+      if (leafLeftRef.current) {
+        gsap.to(leafLeftRef.current, {
+          y: isMobile ? 60 : 140,
+          x: isMobile ? -30 : -80,
+          rotate: -12,
+          scale: 1.15,
+          opacity: 0.2,
+          scrollTrigger: {
+            trigger: ".hero-section",
+            start: "top top",
+            end: "bottom top",
+            scrub: 1.5,
+          },
+        });
+      }
+      if (leafRightRef.current) {
+        gsap.to(leafRightRef.current, {
+          y: isMobile ? 60 : 140,
+          x: isMobile ? 30 : 80,
+          rotate: 12,
+          scale: 1.15,
+          opacity: 0.2,
+          scrollTrigger: {
+            trigger: ".hero-section",
+            start: "top top",
+            end: "bottom top",
+            scrub: 1.5,
+          },
+        });
       }
 
       // --- Features Headline Reveal ---
@@ -260,33 +355,269 @@ export default function Home() {
   return (
     <div>
       {/* Hero Section */}
-      <section className="hero-section relative min-h-screen flex items-center pt-20 pb-20 overflow-hidden bg-dark">
-        {/* Background Radial Glow Pulse */}
-        {!prefersReduced && (
-          <motion.div
-            className="absolute inset-0 pointer-events-none z-0"
+      <section className="hero-section w-full min-h-screen relative flex items-center pt-20 pb-20 overflow-hidden bg-[#0f1a0f]" style={{ position: 'relative', overflow: 'hidden', width: '100%', minHeight: '100vh', margin: 0, padding: 0 }}>
+        {/* Background Video Layer — BOTTOM MOST (z-0) */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: '100%',
+            height: '100%',
+            zIndex: 0,
+            overflow: 'hidden',
+            margin: 0,
+            padding: 0,
+            border: 'none',
+            willChange: 'transform',
+          }}
+        >
+          {/* Background Video */}
+          <video
+            src="/hero-bg.mp4"
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="auto"
+            fetchPriority="high"
+            aria-hidden="true"
             style={{
-              background: "radial-gradient(ellipse at 30% 50%, rgba(34,197,94,0.08) 0%, transparent 70%)",
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              objectPosition: isMobile ? 'center center' : 'center',
+              display: 'block',
+              margin: 0,
+              padding: 0,
+              border: 'none',
             }}
-            animate={!isMobile ? {
-              scale: [1, 1.2, 1],
-              opacity: [0.06, 0.12, 0.06],
-            } : {}}
-            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+          />
+
+          {/* Opacity overlay — dims the video (z-1) */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              width: '100%',
+              height: '100%',
+              background: isMobile ? 'rgba(10, 20, 10, 0.88)' : 'rgba(10, 20, 10, 0.82)',
+              zIndex: 1,
+              margin: 0,
+              padding: 0,
+              border: 'none',
+            }}
+          />
+
+          {/* Blur overlay — 1.5px blur (z-2) */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              width: '100%',
+              height: '100%',
+              backdropFilter: 'blur(1.5px)',
+              WebkitBackdropFilter: 'blur(1.5px)',
+              zIndex: 2,
+              margin: 0,
+              padding: 0,
+              border: 'none',
+            }}
+          />
+
+          {/* Edge Gradients — seamless blend (z-3) */}
+          {/* Top edge (blends into navbar) */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              width: '100vw',
+              height: '200px',
+              background: 'linear-gradient(to bottom, #0f1a0f 0%, transparent 100%)',
+              zIndex: 3,
+              border: 'none',
+            }}
+          />
+          {/* Bottom edge (blends into next section) */}
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              width: '100vw',
+              height: '200px',
+              background: 'linear-gradient(to top, #0f1a0f 0%, transparent 100%)',
+              zIndex: 3,
+              border: 'none',
+            }}
+          />
+          {/* Left edge (blends behind botanical leaf) */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              bottom: 0,
+              width: '200px',
+              height: '100%',
+              background: 'linear-gradient(to right, #0f1a0f 0%, transparent 100%)',
+              zIndex: 3,
+              border: 'none',
+            }}
+          />
+          {/* Right edge (blends behind botanical leaf) */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              bottom: 0,
+              width: '200px',
+              height: '100%',
+              background: 'linear-gradient(to left, #0f1a0f 0%, transparent 100%)',
+              zIndex: 3,
+              border: 'none',
+            }}
+          />
+        </div>
+
+
+
+        {/* z-5: SVG Topographic Lines */}
+        {isMounted && !prefersReduced && !isMobile && (
+          <div className="absolute inset-0 z-[5] pointer-events-none opacity-[0.04]" style={{ zIndex: 5 }} aria-hidden="true">
+            <svg preserveAspectRatio="none" width="100%" height="100%" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+              <path className="topo-path" fill="none" stroke="#22c55e" strokeWidth="1" d="M0,20 Q25,30 50,15 T100,25" />
+              <path className="topo-path" fill="none" stroke="#22c55e" strokeWidth="1" d="M0,35 Q30,45 60,30 T100,40" />
+              <path className="topo-path" fill="none" stroke="#22c55e" strokeWidth="1" d="M0,50 Q40,60 70,45 T100,55" />
+              <path className="topo-path" fill="none" stroke="#22c55e" strokeWidth="1" d="M0,65 Q35,75 75,55 T100,70" />
+              <path className="topo-path" fill="none" stroke="#22c55e" strokeWidth="1" d="M0,80 Q45,90 85,75 T100,85" />
+              <path className="topo-path" fill="none" stroke="#22c55e" strokeWidth="1" d="M0,95 Q25,100 55,90 T100,95" />
+              <path className="topo-path" fill="none" stroke="#22c55e" strokeWidth="1" d="M0,10 Q20,15 40,5 T100,10" />
+              <path className="topo-path" fill="none" stroke="#22c55e" strokeWidth="1" d="M0,85 Q50,95 80,85 T100,80" />
+            </svg>
+          </div>
+        )}
+
+        {/* z-5: Glow Orbs */}
+        {isMounted && (
+          <div className="absolute inset-0 overflow-hidden pointer-events-none z-[5]" style={{ zIndex: 5 }} aria-hidden="true">
+            {/* Orb 1: Always kept, but reduced opacity/static on mobile */}
+            <motion.div
+              className="absolute rounded-full pointer-events-none"
+              style={{ width: 600, height: 600, background: "rgba(34,197,94,0.06)", filter: "blur(80px)", top: '10%', left: '10%', opacity: isMobile ? 0.04 : 1 }}
+              animate={prefersReduced || isMobile ? {} : { x: [-20, 20, -20], y: [-30, 30, -30], scale: [1, 1.1, 1] }}
+              transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+              layoutId={false}
+              aria-hidden="true"
+            />
+            {/* Orb 2 & 3: Disabled on mobile */}
+            {!isMobile && (
+              <>
+                <motion.div
+                  className="absolute rounded-full pointer-events-none"
+                  style={{ width: 400, height: 400, background: "rgba(34,197,94,0.04)", filter: "blur(80px)", top: '5%', right: '5%' }}
+                  animate={prefersReduced ? {} : { x: [20, -20, 20], y: [-20, 20, -20], scale: [1.1, 1, 1.1] }}
+                  transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 3 }}
+                  layoutId={false}
+                  aria-hidden="true"
+                />
+                <motion.div
+                  className="absolute rounded-full pointer-events-none"
+                  style={{ width: 300, height: 300, background: "rgba(34,197,94,0.05)", filter: "blur(80px)", bottom: '5%', left: '20%' }}
+                  animate={prefersReduced ? {} : { x: [-10, 30, -10], y: [20, -20, 20] }}
+                  transition={{ duration: 15, repeat: Infinity, ease: "easeInOut", delay: 6 }}
+                  layoutId={false}
+                  aria-hidden="true"
+                />
+              </>
+            )}
+          </div>
+        )}
+
+        {/* z-6: Diagonal Light Beam */}
+        {isMounted && !prefersReduced && (
+          <motion.div
+            ref={beamRef}
+            className="absolute z-[6] pointer-events-none"
+            style={{
+              top: -100,
+              left: -200,
+              width: 3,
+              height: 800,
+              background: "linear-gradient(to bottom, transparent, rgba(34,197,94,0.08), transparent)",
+              rotate: 35,
+              transformOrigin: "top left",
+              zIndex: 6,
+            }}
+            animate={{ x: [-200, 1800], opacity: [0, 1, 0] }}
+            transition={{ duration: 6, repeat: Infinity, repeatDelay: 14, ease: "easeInOut" }}
+            onAnimationStart={() => {
+              if (beamRef.current) beamRef.current.style.willChange = "transform";
+            }}
+            onAnimationComplete={() => {
+              if (beamRef.current) beamRef.current.style.willChange = "auto";
+            }}
+            layoutId={false}
+            aria-hidden="true"
           />
         )}
 
-        {/* Botanical Leaves with Vignette */}
-        <div ref={leafLeftRef} className="absolute left-0 top-0 bottom-0 w-64 pointer-events-none z-0">
-          <img src="/assets/images/leaves-left.png" alt="" className="h-full w-full object-cover opacity-60" />
-          <div className="absolute inset-0 bg-gradient-to-r from-dark/0 to-dark"></div>
+        {/* z-7: Grain Overlay */}
+        {isMounted && (
+          <div className="absolute inset-0 pointer-events-none z-[7] opacity-[0.03]" style={{ background: "rgba(0,0,0,0.01)", filter: "url(#noise)", zIndex: 7 }} aria-hidden="true">
+            <svg style={{ position: "absolute", width: 0, height: 0, overflow: "hidden" }}>
+              <defs>
+                <filter id="noise">
+                  <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch" />
+                  <feColorMatrix type="saturate" values="0" />
+                </filter>
+              </defs>
+            </svg>
+          </div>
+        )}
+
+        {/* z-10: Botanical Leaves with Vignette */}
+        <div ref={leafLeftRef} className="absolute left-0 top-0 bottom-0 w-64 pointer-events-none z-10 !bg-transparent border-0" style={{ zIndex: 10, background: 'transparent', backgroundColor: 'transparent', border: 'none' }}>
+          <motion.img 
+            src="/assets/images/leaves-left.png" 
+            alt="" 
+            className="h-full w-full object-cover opacity-60 !bg-transparent border-0"
+            style={{ background: 'transparent', backgroundColor: 'transparent', border: 'none' }}
+            animate={prefersReduced || isMobile || isScrolling ? {} : { scale: [1, 1.03, 1] }}
+            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+            layoutId={false}
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0f1a0f]/0 to-[#0f1a0f] !bg-transparent border-0" style={{ background: 'transparent', border: 'none' }}></div>
         </div>
-        <div ref={leafRightRef} className="absolute right-0 top-0 bottom-0 w-64 pointer-events-none z-0">
-          <img src="/assets/images/leaves-right.png" alt="" className="h-full w-full object-cover opacity-60" />
-          <div className="absolute inset-0 bg-gradient-to-l from-dark/0 to-dark"></div>
+        <div ref={leafRightRef} className="absolute right-0 top-0 bottom-0 w-64 pointer-events-none z-10 !bg-transparent border-0" style={{ zIndex: 10, background: 'transparent', backgroundColor: 'transparent', border: 'none' }}>
+          <motion.img 
+            src="/assets/images/leaves-right.png" 
+            alt="" 
+            className="h-full w-full object-cover opacity-60 !bg-transparent border-0"
+            style={{ background: 'transparent', backgroundColor: 'transparent', border: 'none' }}
+            animate={prefersReduced || isMobile || isScrolling ? {} : { scale: [1, 1.03, 1] }}
+            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+            layoutId={false}
+          />
+          <div className="absolute inset-0 bg-gradient-to-l from-[#0f1a0f]/0 to-[#0f1a0f] !bg-transparent border-0" style={{ background: 'transparent', border: 'none' }}></div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
+        <div className="relative z-20 max-w-7xl mx-auto px-6 w-full" style={{ zIndex: 20 }}>
           <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
             
             {/* Left Column - 55% */}
@@ -368,126 +699,213 @@ export default function Home() {
                   animate={!prefersReduced && !isMobile ? { y: [-8, 8, -8] } : {}}
                   transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                 >
-                  {/* Main CSS Card */}
-                  <div className="bg-[#1a2e1a] rounded-[24px] border border-[rgba(34,197,94,0.2)] shadow-[0_24px_60px_rgba(0,0,0,0.4)] p-[32px] w-full h-[420px] flex flex-col relative z-10">
-                    
-                    {/* Card Header */}
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className="w-[72px] h-[72px] rounded-full bg-primary flex items-center justify-center text-white font-bold text-[28px] shrink-0 overflow-hidden">
-                        <img src="/assets/images/worker-electrician.png" alt="Ramesh Kumar" className="w-full h-full object-cover" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-3 mb-1">
-                          <h3 className="text-white font-bold text-[18px]">{t("Ramesh Kumar")}</h3>
-                          <div className="bg-primary/20 text-primary px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider">
-                            ⚡ {t("Electrician")}
+                  {/* Perspective wrapper */}
+                  <div
+                    style={{
+                      perspective: '1000px',
+                      perspectiveOrigin: 'center center'
+                    }}
+                  >
+                    {/* Tilt card */}
+                    <motion.div
+                      ref={cardRef}
+                      onMouseMove={handleMouseMove}
+                      onMouseEnter={handleMouseEnter}
+                      onMouseLeave={handleMouseLeave}
+                      whileTap={isTouchDevice ? { scale: 1.02 } : {}}
+                      animate={{
+                        rotateX: tilt.rotateX,
+                        rotateY: tilt.rotateY,
+                        scale: isHovered && !isTouchDevice ? 1.04 : 1,
+                        boxShadow: isHovered
+                          ? `${glowX}px ${glowY}px 60px rgba(34,197,94,0.2), 0 20px 80px rgba(0,0,0,0.4), 0 0 0 1px rgba(34,197,94,0.1)`
+                          : '0 8px 32px rgba(0,0,0,0.3)',
+                        z: isHovered && !isTouchDevice ? 50 : 0
+                      }}
+                      transition={{
+                        type: 'spring',
+                        stiffness: 300,
+                        damping: 25,
+                        mass: 0.8
+                      }}
+                      style={{
+                        transformStyle: 'preserve-3d',
+                        willChange: 'transform',
+                        borderRadius: '24px',
+                        position: 'relative',
+                        cursor: 'pointer'
+                      }}
+                      className="bg-[#1a2e1a] rounded-[24px] border border-[rgba(34,197,94,0.2)] p-[32px] w-full h-[420px] flex flex-col relative z-10"
+                    >
+                      {/* GLARE EFFECT inside the card */}
+                      {!prefersReduced && !isTouchDevice && (
+                        <motion.div
+                          animate={{
+                            opacity: isHovered ? 0.12 : 0,
+                            background: isHovered
+                              ? `radial-gradient(circle at ${tilt.glareX}% ${tilt.glareY}%, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.1) 40%, transparent 70%)`
+                              : 'none'
+                          }}
+                          transition={{ duration: 0.15 }}
+                          style={{
+                            position: 'absolute',
+                            inset: 0,
+                            borderRadius: '24px',
+                            pointerEvents: 'none',
+                            zIndex: 30,
+                            mixBlendMode: 'overlay'
+                          }}
+                        />
+                      )}
+
+                      {/* Card Header */}
+                      <div className="flex items-center gap-4 mb-4" style={{ transform: 'translateZ(25px)' }}>
+                        <div className="w-[72px] h-[72px] rounded-full bg-primary flex items-center justify-center text-white font-bold text-[28px] shrink-0 overflow-hidden" style={{ transform: 'translateZ(30px)' }}>
+                          <img src="/assets/images/worker-electrician.png" alt="Ramesh Kumar" className="w-full h-full object-cover" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-3 mb-1">
+                            <h3 className="text-white font-bold text-[18px]">{t("Ramesh Kumar")}</h3>
+                            <div className="bg-primary/20 text-primary px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider">
+                              ⚡ {t("Electrician")}
+                            </div>
+                          </div>
+                          <div className="text-[#9ca3af] text-[13px] mb-1">
+                            📍 {t("Patna Rural")} &middot; {t("2.3 km")}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="text-primary tracking-widest text-[14px]">★★★★★</div>
+                            <div className="text-[#9ca3af] text-[12px]">({t("42 reviews")})</div>
                           </div>
                         </div>
-                        <div className="text-[#9ca3af] text-[13px] mb-1">
-                          📍 {t("Patna Rural")} &middot; {t("2.3 km")}
+                      </div>
+
+                      {/* Divider */}
+                      <div className="h-[1px] w-full bg-primary/15 mb-4 shrink-0"></div>
+
+                      {/* Stats Row */}
+                      <div className="grid grid-cols-3 gap-4 text-center mb-4 shrink-0" style={{ transform: 'translateZ(20px)' }}>
+                        <div>
+                          <div className="text-white font-bold text-[24px]">127</div>
+                          <div className="text-[#9ca3af] text-[12px]">{t("Jobs Done")}</div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <div className="text-primary tracking-widest text-[14px]">★★★★★</div>
-                          <div className="text-[#9ca3af] text-[12px]">({t("42 reviews")})</div>
+                        <div>
+                          <div className="text-primary font-bold text-[24px]">4.8★</div>
+                          <div className="text-[#9ca3af] text-[12px]">{t("Rating")}</div>
+                        </div>
+                        <div>
+                          <div className="text-white font-bold text-[24px]">{t("< 1hr")}</div>
+                          <div className="text-[#9ca3af] text-[12px]">{t("Response")}</div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Divider */}
-                    <div className="h-[1px] w-full bg-primary/15 mb-4 shrink-0"></div>
-
-                    {/* Stats Row */}
-                    <div className="grid grid-cols-3 gap-4 text-center mb-4 shrink-0">
-                      <div>
-                        <div className="text-white font-bold text-[24px]">127</div>
-                        <div className="text-[#9ca3af] text-[12px]">{t("Jobs Done")}</div>
-                      </div>
-                      <div>
-                        <div className="text-primary font-bold text-[24px]">4.8★</div>
-                        <div className="text-[#9ca3af] text-[12px]">{t("Rating")}</div>
-                      </div>
-                      <div>
-                        <div className="text-white font-bold text-[24px]">{t("< 1hr")}</div>
-                        <div className="text-[#9ca3af] text-[12px]">{t("Response")}</div>
-                      </div>
-                    </div>
-
-                    {/* Availability Banner */}
-                    <div className="bg-primary/10 border border-primary/30 rounded-[12px] p-[12px_16px] flex items-center justify-between mb-4 shrink-0">
-                      <div className="flex items-center gap-3">
-                        <div className="w-[10px] h-[10px] rounded-full bg-primary animate-available-pulse"></div>
-                        <span className="text-primary font-bold text-[14px]">{t("Available Now")}</span>
-                      </div>
-                      <div className="text-white font-bold text-[18px]">&#8377;400<span className="text-[#9ca3af] text-[14px] font-normal">{t("/day")}</span></div>
-                    </div>
-
-                    {/* Recent Jobs */}
-                    <div className="mb-4 flex-1">
-                      <div className="text-white font-bold text-[14px] mb-2">{t("Recent Jobs")}</div>
-                      <div className="space-y-2">
+                      {/* Availability Banner */}
+                      <div className="bg-primary/10 border border-primary/30 rounded-[12px] p-[12px_16px] flex items-center justify-between mb-4 shrink-0" style={{ transform: 'translateZ(15px)' }}>
                         <div className="flex items-center gap-3">
-                          <div className="w-[32px] h-[32px] rounded-full bg-white/10 shrink-0"></div>
-                          <div className="flex-1 text-[13px]">
-                            <span className="text-white font-medium">{t("Wiring repair")}</span> <span className="text-[#9ca3af]">&middot; {t("Ara Village")}</span>
-                          </div>
-                          <div className="text-primary text-[11px] font-bold">✓ {t("Completed")}</div>
+                          <div className="w-[10px] h-[10px] rounded-full bg-primary animate-available-pulse"></div>
+                          <span className="text-primary font-bold text-[14px]">{t("Available Now")}</span>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <div className="w-[32px] h-[32px] rounded-full bg-white/10 shrink-0"></div>
-                          <div className="flex-1 text-[13px]">
-                            <span className="text-white font-medium">{t("Fan installation")}</span> <span className="text-[#9ca3af]">&middot; {t("Chapra")}</span>
+                        <div className="text-white font-bold text-[18px]">&#8377;400<span className="text-[#9ca3af] text-[14px] font-normal">{t("/day")}</span></div>
+                      </div>
+
+                      {/* Recent Jobs */}
+                      <div className="mb-4 flex-1" style={{ transform: 'translateZ(10px)' }}>
+                        <div className="text-white font-bold text-[14px] mb-2">{t("Recent Jobs")}</div>
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-3">
+                            <div className="w-[32px] h-[32px] rounded-full bg-white/10 shrink-0"></div>
+                            <div className="flex-1 text-[13px]">
+                              <span className="text-white font-medium">{t("Wiring repair")}</span> <span className="text-[#9ca3af]">&middot; {t("Ara Village")}</span>
+                            </div>
+                            <div className="text-primary text-[11px] font-bold">✓ {t("Completed")}</div>
                           </div>
-                          <div className="text-primary text-[11px] font-bold">✓ {t("Completed")}</div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <div className="w-[32px] h-[32px] rounded-full bg-white/10 shrink-0"></div>
-                          <div className="flex-1 text-[13px]">
-                            <span className="text-white font-medium">{t("Switchboard fix")}</span> <span className="text-[#9ca3af]">&middot; {t("Muzaffarpur")}</span>
+                          <div className="flex items-center gap-3">
+                            <div className="w-[32px] h-[32px] rounded-full bg-white/10 shrink-0"></div>
+                            <div className="flex-1 text-[13px]">
+                              <span className="text-white font-medium">{t("Fan installation")}</span> <span className="text-[#9ca3af]">&middot; {t("Chapra")}</span>
+                            </div>
+                            <div className="text-primary text-[11px] font-bold">✓ {t("Completed")}</div>
                           </div>
-                          <div className="text-primary text-[11px] font-bold">✓ {t("Completed")}</div>
+                          <div className="flex items-center gap-3">
+                            <div className="w-[32px] h-[32px] rounded-full bg-white/10 shrink-0"></div>
+                            <div className="flex-1 text-[13px]">
+                              <span className="text-white font-medium">{t("Switchboard fix")}</span> <span className="text-[#9ca3af]">&middot; {t("Muzaffarpur")}</span>
+                            </div>
+                            <div className="text-primary text-[11px] font-bold">✓ {t("Completed")}</div>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Buttons */}
-                    <div className="flex gap-4 shrink-0 mt-auto">
-                      <button className="flex-1 bg-primary text-white font-bold py-3 rounded-[8px] hover:bg-green-600 transition-colors">
-                        {t("Book Now")}
-                      </button>
-                      <button className="flex-1 bg-transparent border-2 border-primary text-primary font-bold py-3 rounded-[8px] hover:bg-primary/10 transition-colors">
-                        {t("WhatsApp")}
-                      </button>
-                    </div>
+                      {/* Buttons */}
+                      <div className="flex gap-4 shrink-0 mt-auto" style={{ transform: 'translateZ(18px)' }}>
+                        <button className="flex-1 bg-primary text-white font-bold py-3 rounded-[8px] hover:bg-green-600 transition-colors">
+                          {t("Book Now")}
+                        </button>
+                        <button className="flex-1 bg-transparent border-2 border-primary text-primary font-bold py-3 rounded-[8px] hover:bg-primary/10 transition-colors">
+                          {t("WhatsApp")}
+                        </button>
+                      </div>
 
+                    </motion.div>
                   </div>
                 </motion.div>
 
                 {/* Floating Badge (Top-Right) — Pulse */}
                 <motion.div
-                  className="absolute -top-[12px] -right-[12px] bg-primary rounded-[50px] px-[16px] py-[8px] text-dark font-bold text-[12px] shadow-lg z-20"
-                  animate={!prefersReduced ? {
-                    scale: [1, 1.05, 1],
-                    boxShadow: [
-                      "0 0 0px rgba(34,197,94,0)",
-                      "0 0 20px rgba(34,197,94,0.4)",
-                      "0 0 0px rgba(34,197,94,0)",
-                    ],
-                  } : {}}
-                  transition={{ duration: 2, repeat: Infinity }}
+                  animate={{
+                    x: isHovered && !isTouchDevice ? tilt.rotateY * -2 : 0,
+                    y: isHovered && !isTouchDevice ? tilt.rotateX * 2 : 0,
+                    z: 30
+                  }}
+                  transition={{ type: 'spring', stiffness: 180, damping: 18 }}
+                  style={{ transformStyle: 'preserve-3d' }}
                 >
-                  ⚡ {t("Live Matching")}
+                  <motion.div
+                    className="absolute -top-[12px] -right-[12px] bg-primary rounded-[50px] px-[16px] py-[8px] text-dark font-bold text-[12px] shadow-lg z-20"
+                    animate={!prefersReduced ? {
+                      scale: [1, 1.05, 1],
+                      boxShadow: [
+                        "0 0 0px rgba(34,197,94,0)",
+                        "0 0 20px rgba(34,197,94,0.4)",
+                        "0 0 0px rgba(34,197,94,0)",
+                      ],
+                    } : {}}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    ⚡ {t("Live Matching")}
+                  </motion.div>
                 </motion.div>
 
                 {/* Floating Mini Card (Bottom-Left) */}
-                <div className="absolute -bottom-[20px] -left-[20px] bg-[#0f1a0f] rounded-[14px] p-[14px_18px] border border-[rgba(34,197,94,0.2)] shadow-xl z-20">
-                  <div className="text-white font-bold text-[14px] mb-1">🟢 {t("3 new job requests")}</div>
-                  <div className="text-[#9ca3af] text-[12px]">{t("in Patna Rural today")}</div>
-                </div>
+                <motion.div
+                  animate={{
+                    x: isHovered && !isTouchDevice ? tilt.rotateY * -1.2 : 0,
+                    y: isHovered && !isTouchDevice ? tilt.rotateX * 1.2 : 0,
+                    z: 15
+                  }}
+                  transition={{ type: 'spring', stiffness: 220, damping: 22 }}
+                  style={{ transformStyle: 'preserve-3d' }}
+                >
+                  <div className="absolute -bottom-[20px] -left-[20px] bg-[#0f1a0f] rounded-[14px] p-[14px_18px] border border-[rgba(34,197,94,0.2)] shadow-xl z-20">
+                    <div className="text-white font-bold text-[14px] mb-1">🟢 {t("3 new job requests")}</div>
+                    <div className="text-[#9ca3af] text-[12px]">{t("in Patna Rural today")}</div>
+                  </div>
+                </motion.div>
 
                 {/* Floating Stat Pill (Top-Left) */}
-                <div className="absolute -top-[20px] -left-[20px] bg-primary rounded-[50px] px-[14px] py-[6px] text-dark font-bold text-[12px] shadow-xl z-20">
-                  ⭐ {t("Top Rated Worker")}
-                </div>
+                <motion.div
+                  animate={{
+                    x: isHovered && !isTouchDevice ? tilt.rotateY * -1.5 : 0,
+                    y: isHovered && !isTouchDevice ? tilt.rotateX * 1.5 : 0,
+                    z: 20
+                  }}
+                  transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+                  style={{ transformStyle: 'preserve-3d' }}
+                >
+                  <div className="absolute -top-[20px] -left-[20px] bg-primary rounded-[50px] px-[14px] py-[6px] text-dark font-bold text-[12px] shadow-xl z-20">
+                    ⭐ {t("Top Rated Worker")}
+                  </div>
+                </motion.div>
               </motion.div>
 
               {/* Mobile View Card (Visible only on mobile) */}
